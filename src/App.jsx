@@ -447,14 +447,14 @@ export default function WebStudio() {
           </div>
           <div className="col-span-4 lg:col-span-7">
             <form
-              name=\"contact\"
-              data-netlify=\"true\"
-              netlify-honeypot=\"bot-field\"
+              name="contact"
+              data-netlify="true"
+              netlify-honeypot="bot-field"
               onSubmit={submit}
-              className=\"card p-6 grid grid-cols-1 md:grid-cols-2 gap-4\"
+              className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              <input type=\"hidden\" name=\"form-name\" value=\"contact\" />
-              <input type=\"hidden\" name=\"bot-field\" />
+              <input type="hidden" name="form-name" value="contact" />
+              <input type="hidden" name="bot-field" />
               {/* Netlify: add data-netlify="true" name="contact" and a hidden input with form-name for production */}
               <div>
                 <label className="ts-h6 block mb-1">Title</label>
