@@ -4,7 +4,6 @@ import {
   Check,
   ArrowRight,
   Star,
-  Sparkles,
   Shield,
   Zap,
   Rocket,
@@ -18,9 +17,9 @@ import {
 
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
- * - Hash router: /#/ (home), /#/why-us, /#/brief/:slug, /#/pay/:slug
+ * - Hash router: /#/ (home), /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you
  * - Netlify forms (contact + 3 briefs). Submits via fetch, then routes to payment.
- * - Payment page uses Stripe Payment Links (paste your URLs below; no backend required).
+ * - Payment page uses Stripe Embedded Checkout via Netlify Function.
  * - Design rules: major-third type scale, 12/4 grid, 8-pt spacing, 60/30/10 palette, high contrast.
  */
 
@@ -46,22 +45,6 @@ const typeScale = {
   h3: 39.0625,
   h2: 48.8281,
   h1: 61.0352,
-};
-
-// Payment links (paste your Stripe Payment Links here)
-const PAYMENT_LINKS = {
-  starter: {
-    base: "#", // e.g. https://buy.stripe.com/...
-    rush: "#",
-  },
-  growth: {
-    base: "#",
-    rush: "#",
-  },
-  scale: {
-    base: "#",
-    rush: "#",
-  },
 };
 
 // Showcase (swap backgrounds with your screenshots later)
@@ -256,6 +239,8 @@ export default function App() {
         <Brief slug={route.rest[0]} />
       ) : route.path === "pay" && route.rest[0] ? (
         <Pay slug={route.rest[0]} />
+      ) : route.path === "thank-you" ? (
+        <ThankYou />
       ) : (
         <NotFound />
       )}
@@ -299,7 +284,7 @@ function Header() {
             className="md:hidden border-t border-[var(--clr-subtle)] bg-white"
           >
             <div className="px-6 py-3 flex flex-col gap-2">
-              <a href="#/" onClick={()=>{}} className="ts-h6 py-2">Home</a>
+              <a href="#/" className="ts-h6 py-2">Home</a>
               <a href="#/why-us" className="ts-h6 py-2">Why us</a>
               <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('work');}} className="ts-h6 py-2">Work</a>
               <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="ts-h6 py-2">Packages</a>
@@ -824,20 +809,60 @@ function FormField({ label, value, onChange, textarea, type = "text" }) {
   );
 }
 
-/* ---------------- Payment ---------------- */
+/* ---------------- Payment (Embedded Checkout) ---------------- */
 
 function Pay({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
   if (!pkg) return <NotFound />;
 
-  // allow toggling rush on payment too
   const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
   const initialRush = params.get("rush") === "1";
   const [rush, setRush] = useState(initialRush);
-  const total = pkg.price + (rush ? pkg.rushFee : 0);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [error, setError] = useState("");
+  const containerRef = useRef(null);
 
-  const link =
-    rush ? PAYMENT_LINKS[pkg.slug]?.rush : PAYMENT_LINKS[pkg.slug]?.base;
+  useEffect(() => {
+    async function go() {
+      try {
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            rush,
+            origin: window.location.origin,
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to create session");
+        const { clientSecret } = await res.json();
+        setClientSecret(clientSecret);
+      } catch (e) {
+        setError("Could not start checkout. Please email contact@citeks.net.");
+      }
+    }
+    go();
+  }, [slug, rush]);
+
+  useEffect(() => {
+    let cleanup = () => {};
+    async function mount() {
+      if (!clientSecret || !containerRef.current) return;
+      const { loadStripe } = await import("@stripe/stripe-js");
+      const stripe = await loadStripe(
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
+      );
+      if (!stripe) { setError("Stripe not available."); return; }
+
+      const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
+      checkout.mount(containerRef.current);
+      cleanup = () => checkout.destroy();
+    }
+    mount();
+    return () => cleanup();
+  }, [clientSecret]);
+
+  const total = pkg.price + (rush ? pkg.rushFee : 0);
 
   return (
     <section className="py-10 lg:py-24">
@@ -851,25 +876,42 @@ function Pay({ slug }) {
 
           <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
-              <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={rush}
+                onChange={(e) => setRush(e.target.checked)}
+              />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
             </label>
             <div className="ts-h4 font-semibold">Total: ${total}</div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
-            {link && link !== "#" ? (
-              <a href={link} className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
-                Pay now <ArrowRight className="w-4 h-4" />
-              </a>
-            ) : (
-              <div className="ts-h6 text-slate-600">
-                Paste your Stripe Payment Link in <code>PAYMENT_LINKS</code> for this option to enable checkout.
-              </div>
-            )}
-            <a href="#/" className="ts-h6 underline">Back to home</a>
+          {/* Embedded Checkout container */}
+          <div className="mt-6">
+            {error && <div className="ts-h6 text-red-600 mb-3">{error}</div>}
+            <div ref={containerRef} id="checkout" className="w-full" />
+          </div>
+
+          <div className="mt-4 ts-h6 text-slate-500">
+            Secure payment powered by Stripe.
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Thank You ---------------- */
+
+function ThankYou() {
+  return (
+    <section className="py-16">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h2 font-semibold mb-2">Thank you!</h1>
+        <p className="ts-h6 text-slate-600">
+          Your payment was received. We’ll email you shortly from contact@citeks.net with next steps.
+        </p>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-4">Back to home</a>
       </div>
     </section>
   );
