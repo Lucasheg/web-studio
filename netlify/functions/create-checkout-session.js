@@ -1,10 +1,39 @@
-// ESM version (works with "type": "module")
-import Stripe from "stripe";
+// /.netlify/functions/create-checkout-session
+// CommonJS works reliably regardless of your root "type": "module"
+const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function handler(event) {
+exports.handler = async (event) => {
+  // CORS (safe even if same-origin)
+  const baseHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: baseHeaders, body: "" };
+  }
+
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { statusCode: 405, headers: baseHeaders, body: JSON.stringify({ error: "Method Not Allowed" }) };
+  }
+
+  // Quick env sanity checks (don’t reveal secrets)
+  const required = [
+    "STRIPE_SECRET_KEY",
+    "PRICE_STARTER_BASE", "PRICE_STARTER_RUSH",
+    "PRICE_GROWTH_BASE",  "PRICE_GROWTH_RUSH",
+    "PRICE_SCALE_BASE",   "PRICE_SCALE_RUSH"
+  ];
+  const missing = required.filter((k) => !process.env[k]);
+  if (missing.length) {
+    return {
+      statusCode: 500,
+      headers: baseHeaders,
+      body: JSON.stringify({ error: `Missing env vars: ${missing.join(", ")}` })
+    };
   }
 
   try {
@@ -17,7 +46,9 @@ export async function handler(event) {
     };
 
     const price = priceMap[slug];
-    if (!price) return { statusCode: 400, body: "Invalid package" };
+    if (!price) {
+      return { statusCode: 400, headers: baseHeaders, body: JSON.stringify({ error: "Invalid package" }) };
+    }
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
@@ -28,11 +59,12 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: baseHeaders,
       body: JSON.stringify({ clientSecret: session.client_secret })
     };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: "Server Error" };
+    // Forward the message (typical: "No such price: price_xxx" when ID is wrong)
+    return { statusCode: 500, headers: baseHeaders, body: JSON.stringify({ error: err.message }) };
   }
-}
+};
