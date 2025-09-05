@@ -1,38 +1,35 @@
-// /.netlify/functions/create-checkout-session
-// CommonJS works reliably regardless of your root "type": "module"
-const Stripe = require("stripe");
+// ESM function (matches "type": "module" in your package.json)
+import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-exports.handler = async (event) => {
-  // CORS (safe even if same-origin)
+export async function handler(event) {
   const baseHeaders = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
   };
 
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers: baseHeaders, body: "" };
   }
-
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, headers: baseHeaders, body: JSON.stringify({ error: "Method Not Allowed" }) };
   }
 
-  // Quick env sanity checks (don’t reveal secrets)
+  // Env sanity
   const required = [
     "STRIPE_SECRET_KEY",
     "PRICE_STARTER_BASE", "PRICE_STARTER_RUSH",
     "PRICE_GROWTH_BASE",  "PRICE_GROWTH_RUSH",
-    "PRICE_SCALE_BASE",   "PRICE_SCALE_RUSH"
+    "PRICE_SCALE_BASE",   "PRICE_SCALE_RUSH",
   ];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) {
     return {
       statusCode: 500,
       headers: baseHeaders,
-      body: JSON.stringify({ error: `Missing env vars: ${missing.join(", ")}` })
+      body: JSON.stringify({ error: `Missing env vars: ${missing.join(", ")}` }),
     };
   }
 
@@ -42,7 +39,7 @@ exports.handler = async (event) => {
     const priceMap = {
       starter: rush ? process.env.PRICE_STARTER_RUSH : process.env.PRICE_STARTER_BASE,
       growth:  rush ? process.env.PRICE_GROWTH_RUSH  : process.env.PRICE_GROWTH_BASE,
-      scale:   rush ? process.env.PRICE_SCALE_RUSH   : process.env.PRICE_SCALE_BASE
+      scale:   rush ? process.env.PRICE_SCALE_RUSH   : process.env.PRICE_SCALE_BASE,
     };
 
     const price = priceMap[slug];
@@ -54,17 +51,16 @@ exports.handler = async (event) => {
       ui_mode: "embedded",
       mode: "payment",
       line_items: [{ price, quantity: 1 }],
-      return_url: `${origin || "https://citeks.net"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`
+      return_url: `${origin || "https://citeks.net"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     });
 
     return {
       statusCode: 200,
       headers: baseHeaders,
-      body: JSON.stringify({ clientSecret: session.client_secret })
+      body: JSON.stringify({ clientSecret: session.client_secret }),
     };
   } catch (err) {
     console.error(err);
-    // Forward the message (typical: "No such price: price_xxx" when ID is wrong)
     return { statusCode: 500, headers: baseHeaders, body: JSON.stringify({ error: err.message }) };
   }
-};
+}
