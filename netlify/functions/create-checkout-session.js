@@ -1,4 +1,4 @@
-// ESM function (matches "type": "module" in your package.json)
+// ESM function (works with "type": "module")
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -17,7 +17,7 @@ export async function handler(event) {
     return { statusCode: 405, headers: baseHeaders, body: JSON.stringify({ error: "Method Not Allowed" }) };
   }
 
-  // Env sanity
+  // Sanity-check required env vars
   const required = [
     "STRIPE_SECRET_KEY",
     "PRICE_STARTER_BASE", "PRICE_STARTER_RUSH",
@@ -26,11 +26,7 @@ export async function handler(event) {
   ];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) {
-    return {
-      statusCode: 500,
-      headers: baseHeaders,
-      body: JSON.stringify({ error: `Missing env vars: ${missing.join(", ")}` }),
-    };
+    return { statusCode: 500, headers: baseHeaders, body: JSON.stringify({ error: `Missing env vars: ${missing.join(", ")}` }) };
   }
 
   try {
@@ -54,11 +50,7 @@ export async function handler(event) {
       return_url: `${origin || "https://citeks.net"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     });
 
-    return {
-      statusCode: 200,
-      headers: baseHeaders,
-      body: JSON.stringify({ clientSecret: session.client_secret }),
-    };
+    return { statusCode: 200, headers: baseHeaders, body: JSON.stringify({ clientSecret: session.client_secret }) };
   } catch (err) {
     console.error(err);
     return { statusCode: 500, headers: baseHeaders, body: JSON.stringify({ error: err.message }) };
