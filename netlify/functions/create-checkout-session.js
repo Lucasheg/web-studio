@@ -1,9 +1,8 @@
 // /.netlify/functions/create-checkout-session
-import Stripe from "stripe";
-
+const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function handler(event) {
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -18,15 +17,13 @@ export async function handler(event) {
     };
 
     const price = priceMap[slug];
-    if (!price) {
-      return { statusCode: 400, body: "Invalid package" };
-    }
+    if (!price) return { statusCode: 400, body: "Invalid package" };
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
       mode: "payment",
       line_items: [{ price, quantity: 1 }],
-      return_url: `${origin || "https://example.com"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+      return_url: `${origin || "https://citeks.net"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     });
 
     return {
@@ -38,4 +35,4 @@ export async function handler(event) {
     console.error(err);
     return { statusCode: 500, body: "Server Error" };
   }
-}
+};
