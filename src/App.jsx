@@ -815,8 +815,10 @@ function Pay({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
   if (!pkg) return <NotFound />;
 
+  // read ?rush=1 from the URL so it matches what they selected in the brief
   const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
   const initialRush = params.get("rush") === "1";
+
   const [rush, setRush] = useState(initialRush);
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState("");
@@ -834,11 +836,23 @@ function Pay({ slug }) {
             origin: window.location.origin,
           }),
         });
-        if (!res.ok) throw new Error("Failed to create session");
+
+        if (!res.ok) {
+          const text = await res.text(); // show the real reason from the function
+          throw new Error(text || "Failed to create session");
+        }
+
         const { clientSecret } = await res.json();
         setClientSecret(clientSecret);
+        setError("");
       } catch (e) {
-        setError("Could not start checkout. Please email contact@citeks.net.");
+        // Try to parse JSON error from the function; fall back to raw message
+        try {
+          const parsed = JSON.parse(e.message);
+          setError(parsed.error || "Could not start checkout. Please email contact@citeks.net.");
+        } catch {
+          setError(e.message || "Could not start checkout. Please email contact@citeks.net.");
+        }
       }
     }
     go();
@@ -848,6 +862,7 @@ function Pay({ slug }) {
     let cleanup = () => {};
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
+
       const { loadStripe } = await import("@stripe/stripe-js");
       const stripe = await loadStripe(
         import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
@@ -868,6 +883,7 @@ function Pay({ slug }) {
     <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h2 font-semibold">Payment</h1>
+
         <div className="card p-6 mt-6">
           <div className="ts-h4 font-semibold">{pkg.name}</div>
           <div className="ts-h6 text-slate-600 mt-1">
@@ -888,7 +904,11 @@ function Pay({ slug }) {
 
           {/* Embedded Checkout container */}
           <div className="mt-6">
-            {error && <div className="ts-h6 text-red-600 mb-3">{error}</div>}
+            {error && (
+              <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">
+                {error}
+              </div>
+            )}
             <div ref={containerRef} id="checkout" className="w-full" />
           </div>
 
