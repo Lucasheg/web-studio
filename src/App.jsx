@@ -822,6 +822,8 @@ function Pay({ slug }) {
   const [rush, setRush] = useState(initialRush);
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState("unknown"); // "live" | "test" | "unknown"
+  const [pkUsed, setPkUsed] = useState("");
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -844,6 +846,7 @@ function Pay({ slug }) {
 
         const { clientSecret } = await res.json();
         setClientSecret(clientSecret);
+        setMode(clientSecret?.startsWith("cs_live_") ? "live" : "test");
         setError("");
       } catch (e) {
         // Try to parse JSON error from the function; fall back to raw message
@@ -864,9 +867,15 @@ function Pay({ slug }) {
       if (!clientSecret || !containerRef.current) return;
 
       const { loadStripe } = await import("@stripe/stripe-js");
-      const stripe = await loadStripe(
-        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
-      );
+      const pk = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY;
+      setPkUsed(pk || "");
+      if (!pk) { setError("Missing publishable key (VITE_STRIPE_PUBLISHABLE_KEY)."); return; }
+
+      // Dev-only visibility to confirm which key you’re on:
+      // Remove this console.log after you verify it shows pk_live_...
+      console.log("Stripe PK =", pk);
+
+      const stripe = await loadStripe(pk);
       if (!stripe) { setError("Stripe not available."); return; }
 
       const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
@@ -885,9 +894,26 @@ function Pay({ slug }) {
         <h1 className="ts-h2 font-semibold">Payment</h1>
 
         <div className="card p-6 mt-6">
-          <div className="ts-h4 font-semibold">{pkg.name}</div>
-          <div className="ts-h6 text-slate-600 mt-1">
-            Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="ts-h4 font-semibold">{pkg.name}</div>
+              <div className="ts-h6 text-slate-600 mt-1">
+                Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
+              </div>
+            </div>
+
+            {/* Tiny mode badge to help you switch to Live */}
+            <div
+              className={cx(
+                "px-3 py-1 rounded-full ts-h6",
+                mode === "live" ? "bg-green-100 text-green-700" :
+                mode === "test" ? "bg-yellow-100 text-yellow-700" :
+                "bg-slate-100 text-slate-600"
+              )}
+              title={pkUsed ? `Using PK: ${pkUsed}` : "No publishable key detected"}
+            >
+              {mode === "live" ? "Live mode" : mode === "test" ? "Test mode" : "Checking…"}
+            </div>
           </div>
 
           <div className="flex items-center justify-between mt-4">
