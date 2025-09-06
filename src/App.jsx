@@ -217,49 +217,39 @@ export default function App() {
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* Mobile-only compaction (desktop untouched) */
+        /* Mobile-only: make fonts 2px smaller (desktop untouched) */
 @media (max-width: 480px){
-  /* downshift headings exactly one step on the Major Third scale */
   :root {
-    --ts-h6: 16px;       /* was 18 */
-    --ts-h5: 20px;       /* was 22 */
-    --ts-h4: 25px;       /* was 28 */
-    --ts-h3: 31.25px;    /* was 34 */
-    --ts-h2: 39.0625px;  /* was 40 */
-    --ts-h1: 48px;       /* was 48 (kept compact but strong) */
+    --ts-p: 14px;     /* was 16 */
+    --ts-h6: 16px;    /* was 18 */
+    --ts-h5: 20px;    /* was 22 */
+    --ts-h4: 26px;    /* was 28 */
+    --ts-h3: 32px;    /* was 34 */
+    --ts-h2: 38px;    /* was 40 */
+    --ts-h1: 46px;    /* was 48 */
   }
 
-  /* tighter vertical rhythm across sections */
+  /* keep your existing compact spacing as-is; no desktop changes */
   section {
     padding-top: 16px !important;
     padding-bottom: 16px !important;
   }
-
-  /* keep 8-pt spacing system */
   .grid-12 { gap: 16px; }
-
-  /* container side padding a bit narrower */
   .mx-auto.max-w-\[var\(--container\)\].px-6 {
     padding-left: 16px !important;
     padding-right: 16px !important;
   }
-
-  /* shrink all generic p-6/p-? utilities on mobile to reduce bulk */
-  .p-6 { padding: 16px !important; }         /* 24 → 16 */
+  .p-6 { padding: 16px !important; }
   .px-6 { padding-left: 16px !important; padding-right: 16px !important; }
-
-  /* cards slightly smaller corners & padding (still 8-pt) */
   .card { border-radius: 1rem; }
   .card.p-6 { padding: 16px !important; }
 
-  /* compact buttons + inputs, still readable and on the 8-pt grid */
-  .btn-accent { padding: 8px 16px !important; border-radius: 9999px; }
+  /* keep inputs at 16px to avoid iOS zoom; change if you really want */
   input, select, textarea { padding: 8px 16px !important; font-size: 16px; }
+  .btn-accent { padding: 8px 16px !important; border-radius: 9999px; }
 
-  /* small helper for stacked blocks that used to look airy on mobile */
   .tight-block { margin-bottom: 16px !important; }
 }
-
       `}</style>
 
       <Header />
