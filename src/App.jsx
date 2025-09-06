@@ -217,39 +217,27 @@ export default function App() {
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* Mobile-only: make fonts 2px smaller (desktop untouched) */
-@media (max-width: 480px){
-  :root {
-    --ts-p: 14px;     /* was 16 */
-    --ts-h6: 16px;    /* was 18 */
-    --ts-h5: 20px;    /* was 22 */
-    --ts-h4: 26px;    /* was 28 */
-    --ts-h3: 32px;    /* was 34 */
-    --ts-h2: 38px;    /* was 40 */
-    --ts-h1: 46px;    /* was 48 */
-  }
+        /* Mobile compaction: fonts 2 steps smaller + tighter spacing */
+        @media (max-width: 480px){
+          :root {
+            --ts-h6: 16px; /* was 20 */
+            --ts-h5: 20px; /* was 25 */
+            --ts-h4: 25px; /* was 31.25 */
+            --ts-h3: 31px; /* was 39.06 */
+            --ts-h2: 38px; /* was 48.83 */
+            --ts-h1: 46px; /* was 61.03 */
+          }
+          .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
+          .tight-block { margin-bottom: 16px !important; }
+          .card { border-radius: 1rem; }
+          .card.p-6 { padding: 16px !important; }
+          .grid-12 { gap: 16px; }
+          .stack-tight > * + * { margin-top: 12px; }
 
-  /* keep your existing compact spacing as-is; no desktop changes */
-  section {
-    padding-top: 16px !important;
-    padding-bottom: 16px !important;
-  }
-  .grid-12 { gap: 16px; }
-  .mx-auto.max-w-\[var\(--container\)\].px-6 {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-  }
-  .p-6 { padding: 16px !important; }
-  .px-6 { padding-left: 16px !important; padding-right: 16px !important; }
-  .card { border-radius: 1rem; }
-  .card.p-6 { padding: 16px !important; }
-
-  /* keep inputs at 16px to avoid iOS zoom; change if you really want */
-  input, select, textarea { padding: 8px 16px !important; font-size: 16px; }
-  .btn-accent { padding: 8px 16px !important; border-radius: 9999px; }
-
-  .tight-block { margin-bottom: 16px !important; }
-}
+          /* Ensure hero picks up the smaller sizes */
+          .hero .ts-h1 { font-size: var(--ts-h1) !important; }
+          .hero .ts-h5 { font-size: var(--ts-h5) !important; }
+        }
       `}</style>
 
       <Header />
@@ -354,7 +342,7 @@ function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-x-clip">
+      <section className="relative overflow-x-clip hero">
         <div className="absolute inset-0 -z-10 pointer-events-none">
           <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full"
                style={{background:"radial-gradient(ellipse at center, rgba(59,130,246,0.15), transparent 60%)"}}/>
@@ -969,7 +957,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input
                 type="checkbox"
