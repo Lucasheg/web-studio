@@ -201,59 +201,46 @@ export default function App() {
       className="min-h-screen overflow-x-hidden bg-[var(--clr-neutral)] text-[var(--clr-secondary)]"
     >
       <style>{`
-        html, body, #root { height: 100%; overflow-x: hidden; }
-        :root { --container: 1280px; }
-        .ts-p { font-size: var(--ts-p); letter-spacing: 0; line-height: 1.5; }
-        .ts-h6 { font-size: var(--ts-h6); letter-spacing: -0.005em; line-height: 1.3; }
-        .ts-h5 { font-size: var(--ts-h5); letter-spacing: -0.01em; line-height: 1.3; }
-        .ts-h4 { font-size: var(--ts-h4); letter-spacing: -0.012em; line-height: 1.3; }
-        .ts-h3 { font-size: var(--ts-h3); letter-spacing: -0.015em; line-height: 1.2; }
-        .ts-h2 { font-size: var(--ts-h2); letter-spacing: -0.018em; line-height: 1.1; }
-        .ts-h1 { font-size: var(--ts-h1); letter-spacing: -0.02em; line-height: 1.0; }
-        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }  /* 16px gap (8-pt grid) */
-        @media (min-width: 1024px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 2rem; } }
-        .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
-        .btn-accent { background: var(--clr-accent); color: white; }
-        .btn-accent:hover { background: var(--clr-accent-hover); }
-        .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
+  /* Base */
+  html, body, #root { height: 100%; overflow-x: hidden; }
+  :root { --container: 1280px; }
 
-        /* Mobile compaction: fonts 2 steps smaller + tighter spacing */
-        @media (max-width: 480px){
-          :root {
-            --ts-h6: 16px; /* was 20 */
-            --ts-h5: 20px; /* was 25 */
-            --ts-h4: 25px; /* was 31.25 */
-            --ts-h3: 31px; /* was 39.06 */
-            --ts-h2: 38px; /* was 48.83 */
-            --ts-h1: 46px; /* was 61.03 */
-          }
-          .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
-          .tight-block { margin-bottom: 16px !important; }
-          .card { border-radius: 1rem; }
-          .card.p-6 { padding: 16px !important; }
-          .grid-12 { gap: 16px; }
-          .stack-tight > * + * { margin-top: 12px; }
+  /* Typography — FLUID (mobile→tablet→desktop) using your Major Third scale */
+  .ts-p  { font-size: 16px; letter-spacing: 0; line-height: 1.5; }
 
-          /* Ensure hero picks up the smaller sizes */
-          .hero .ts-h1 { font-size: var(--ts-h1) !important; }
-          .hero .ts-h5 { font-size: var(--ts-h5) !important; }
-        } 
-        /* Ensure the hero heading & subheading shrink on mobile, even if another rule wins */
-@media (max-width: 640px){
-  section.hero h1.ts-h1{
-    /* 2 steps smaller than desktop baseline */
-    font-size: 46px !important;      /* matches your --ts-h1 mobile var */
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+  /* Mobile minimums are ~two steps smaller; desktop caps are your originals */
+  .ts-h6 { font-size: clamp(16px, 1.5vw, 20px);        letter-spacing: -0.005em; line-height: 1.3; }
+  .ts-h5 { font-size: clamp(16px, 2.0vw, 25px);        letter-spacing: -0.010em; line-height: 1.3; }
+  .ts-h4 { font-size: clamp(20px, 2.6vw, 31.25px);     letter-spacing: -0.012em; line-height: 1.3; }
+  .ts-h3 { font-size: clamp(25px, 3.4vw, 39.0625px);   letter-spacing: -0.015em; line-height: 1.2; }
+  .ts-h2 { font-size: clamp(31.25px, 4.2vw, 48.8281px);letter-spacing: -0.018em; line-height: 1.1; }
+  .ts-h1 { font-size: clamp(40px, 5.2vw, 61.0352px);   letter-spacing: -0.020em; line-height: 1.0; }
+
+  /* Layout & components */
+  .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; } /* 8-pt: 16px */
+  @media (min-width: 1024px) {
+    .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 32px; } /* 8-pt: 32px */
   }
-  section.hero p.ts-h5{
-    font-size: 20px !important;      /* matches your --ts-h5 mobile var */
-    line-height: 1.45;
-    letter-spacing: -0.01em;
-  }
-}
 
-      `}</style>
+  .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
+  .btn-accent { background: var(--clr-accent); color: white; }
+  .btn-accent:hover { background: var(--clr-accent-hover); }
+  .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
+
+  /* Tablet tweaks (comfortable density) */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .card.p-6 { padding: 20px; } /* slightly tighter than desktop (24px) */
+  }
+
+  /* Mobile compaction (keep p=16 for readability) */
+  @media (max-width: 480px){
+    .card { border-radius: 16px; }
+    .card.p-6 { padding: 16px; } /* 8-pt */
+    .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
+    .tight-block { margin-bottom: 16px !important; }
+    .stack-tight > * + * { margin-top: 12px; }
+  }
+`}</style>
 
       <Header />
 
