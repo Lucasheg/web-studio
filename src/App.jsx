@@ -237,7 +237,22 @@ export default function App() {
           /* Ensure hero picks up the smaller sizes */
           .hero .ts-h1 { font-size: var(--ts-h1) !important; }
           .hero .ts-h5 { font-size: var(--ts-h5) !important; }
-        }
+        } 
+        /* Ensure the hero heading & subheading shrink on mobile, even if another rule wins */
+@media (max-width: 640px){
+  section.hero h1.ts-h1{
+    /* 2 steps smaller than desktop baseline */
+    font-size: 46px !important;      /* matches your --ts-h1 mobile var */
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  section.hero p.ts-h5{
+    font-size: 20px !important;      /* matches your --ts-h5 mobile var */
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+}
+
       `}</style>
 
       <Header />
