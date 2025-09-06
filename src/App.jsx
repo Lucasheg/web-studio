@@ -217,23 +217,49 @@ export default function App() {
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* Mobile compaction while keeping p=16 baseline */
-        @media (max-width: 480px){
-          :root {
-            --ts-h6: 18px; /* down a step but still readable */
-            --ts-h5: 22px;
-            --ts-h4: 28px;
-            --ts-h3: 34px;
-            --ts-h2: 40px;
-            --ts-h1: 48px;
-          }
-          .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
-          .tight-block { margin-bottom: 16px !important; }
-          .card { border-radius: 1rem; }
-          .card.p-6 { padding: 16px !important; } /* 8-pt */
-          .grid-12 { gap: 16px; } /* 8-pt */
-          .stack-tight > * + * { margin-top: 12px; } /* visual, ok */
-        }
+        /* Mobile-only compaction (desktop untouched) */
+@media (max-width: 480px){
+  /* downshift headings exactly one step on the Major Third scale */
+  :root {
+    --ts-h6: 16px;       /* was 18 */
+    --ts-h5: 20px;       /* was 22 */
+    --ts-h4: 25px;       /* was 28 */
+    --ts-h3: 31.25px;    /* was 34 */
+    --ts-h2: 39.0625px;  /* was 40 */
+    --ts-h1: 48px;       /* was 48 (kept compact but strong) */
+  }
+
+  /* tighter vertical rhythm across sections */
+  section {
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+  }
+
+  /* keep 8-pt spacing system */
+  .grid-12 { gap: 16px; }
+
+  /* container side padding a bit narrower */
+  .mx-auto.max-w-\[var\(--container\)\].px-6 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* shrink all generic p-6/p-? utilities on mobile to reduce bulk */
+  .p-6 { padding: 16px !important; }         /* 24 → 16 */
+  .px-6 { padding-left: 16px !important; padding-right: 16px !important; }
+
+  /* cards slightly smaller corners & padding (still 8-pt) */
+  .card { border-radius: 1rem; }
+  .card.p-6 { padding: 16px !important; }
+
+  /* compact buttons + inputs, still readable and on the 8-pt grid */
+  .btn-accent { padding: 8px 16px !important; border-radius: 9999px; }
+  input, select, textarea { padding: 8px 16px !important; font-size: 16px; }
+
+  /* small helper for stacked blocks that used to look airy on mobile */
+  .tight-block { margin-bottom: 16px !important; }
+}
+
       `}</style>
 
       <Header />
