@@ -1,56 +1,148 @@
-// -- snip --
-// (identical imports and top comments as your current file)
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Check, ArrowRight, Star, Shield, Zap, Rocket,
-  LineChart, MapPin, Calendar, Mail, Menu, X,
+  Check,
+  ArrowRight,
+  Star,
+  Shield,
+  Zap,
+  Rocket,
+  LineChart,
+  MapPin,
+  Calendar,
+  Mail,
+  Menu,
+  X,
 } from "lucide-react";
 
-/* DESIGN + THEME */
-function cx(...classes) { return classes.filter(Boolean).join(" "); }
+/**
+ * CITEKS – High-CVR Web Studio (single-file app)
+ * Routes: /#/, /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
+ * - Netlify forms (contact + 3 briefs). File upload supported. Brief validates required fields.
+ * - Payment via Stripe Embedded Checkout (Netlify Functions).
+ * - Thank-you pulls session status + summary from a new function.
+ * - Design rules: major-third type scale baseline 16px, 12/4 grid, 8pt spacing, 60/30/10 palette, high contrast.
+ */
 
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+// Theme
 const theme = {
-  neutral: "#F5F7FB", secondary: "#0F172A",
-  accent: "#3B82F6", accentHover: "#1D4ED8", subtle: "#E5E7EB",
+  neutral: "#F5F7FB", // 60% background
+  secondary: "#0F172A", // 30% headings/cards
+  accent: "#3B82F6", // 10% CTAs
+  accentHover: "#1D4ED8",
+  subtle: "#E5E7EB",
 };
 
+// Type scale (Major Third 1.25) rooted at 16px
 const typeScale = {
-  p: 16, h6: 20, h5: 25, h4: 31.25, h3: 39.0625, h2: 48.8281, h1: 61.0352,
+  p: 16,
+  h6: 20,
+  h5: 25,
+  h4: 31.25,
+  h3: 39.0625,
+  h2: 48.8281,
+  h1: 61.0352,
 };
 
+// Showcase (swap backgrounds with your screenshots later)
 const showcase = [
-  { title:"Conversion-first Restaurant Site", caption:"Menu sync, Google Maps, bookings — built to sell the visit.", bg:"linear-gradient(135deg,#c7d2fe 0%,#93c5fd 100%)"},
-  { title:"Dentist Funnel Redesign", caption:"From browse to booking in 2 clicks.", bg:"linear-gradient(135deg,#fbcfe8 0%,#fecaca 100%)"},
-  { title:"Gym Landing + Trials", caption:"Trial offer + urgency banner lifted sign-ups.", bg:"linear-gradient(135deg,#bbf7d0 0%,#86efac 100%)"},
-  { title:"Boutique Barber Studio", caption:"Brand, price anchors, and trust badges.", bg:"linear-gradient(135deg,#fde68a 0%,#fca5a5 100%)"},
+  {
+    title: "Conversion-first Restaurant Site",
+    caption: "Menu sync, Google Maps, bookings — built to sell the visit.",
+    bg: "linear-gradient(135deg, #c7d2fe 0%, #93c5fd 100%)",
+  },
+  {
+    title: "Dentist Funnel Redesign",
+    caption: "From browse to booking in 2 clicks.",
+    bg: "linear-gradient(135deg, #fbcfe8 0%, #fecaca 100%)",
+  },
+  {
+    title: "Gym Landing + Trials",
+    caption: "Trial offer + urgency banner lifted sign-ups.",
+    bg: "linear-gradient(135deg, #bbf7d0 0%, #86efac 100%)",
+  },
+  {
+    title: "Boutique Barber Studio",
+    caption: "Brand, price anchors, and trust badges.",
+    bg: "linear-gradient(135deg, #fde68a 0%, #fca5a5 100%)",
+  },
 ];
 
+// Packages with timelines + rush options
 const packages = [
-  { slug:"starter", name:"Starter", price:900, displayPrice:"$900", days:4, rushDays:2, rushFee:200,
-    blurb:"2–3 pages, custom design. Mobile + desktop. Modern animations.",
-    perfectFor:"Cafés, barbers, freelancers",
-    features:["2–3 custom pages","Responsive + performance pass","Simple lead/contact form","Launch in days, not weeks"],
-    cta:"Start Starter",
-    timelineNote:"Typical timeline: 4 days (rush 2 days for an additional $200).",
+  {
+    slug: "starter",
+    name: "Starter",
+    price: 900,
+    displayPrice: "$900",
+    days: 4,
+    rushDays: 2,
+    rushFee: 200,
+    blurb: "2–3 pages, custom design. Mobile + desktop. Modern animations.",
+    perfectFor: "Cafés, barbers, freelancers",
+    features: [
+      "2–3 custom pages",
+      "Responsive + performance pass",
+      "Simple lead/contact form",
+      "Launch in days, not weeks",
+    ],
+    cta: "Start Starter",
+    timelineNote:
+      "Typical timeline: 4 days (rush 2 days for an additional $200).",
   },
-  { slug:"growth", name:"Growth", price:2300, displayPrice:"$2,300", days:8, rushDays:6, rushFee:400,
-    blurb:"5–7 pages, custom design + SEO. Contact/booking, Maps, integrations, content guidance.",
-    perfectFor:"Dentists, gyms, restaurants, small firms",
-    features:["5–7 custom pages","On-page SEO + schema","Contact / booking form + Maps","3rd-party integrations","Content guidance (no full copy)"],
-    highlight:true, cta:"Grow with Growth",
-    timelineNote:"Typical timeline: 8 days (rush 6 days for an additional $400).",
+  {
+    slug: "growth",
+    name: "Growth",
+    price: 2300,
+    displayPrice: "$2,300",
+    days: 8,
+    rushDays: 6,
+    rushFee: 400,
+    blurb:
+      "5–7 pages, custom design + SEO. Contact/booking, Maps, integrations, content guidance.",
+    perfectFor: "Dentists, gyms, restaurants, small firms",
+    features: [
+      "5–7 custom pages",
+      "On-page SEO + schema",
+      "Contact / booking form + Maps",
+      "3rd-party integrations",
+      "Content guidance (no full copy)",
+    ],
+    highlight: true,
+    cta: "Grow with Growth",
+    timelineNote:
+      "Typical timeline: 8 days (rush 6 days for an additional $400).",
   },
-  { slug:"scale", name:"Scale", price:7000, displayPrice:"$7,000", days:14, rushDays:10, rushFee:800,
-    blurb:"10+ pages, full custom design. Strategy (brand/positioning/funnel), advanced SEO + analytics, booking/e-commerce/CRM, copy support.",
-    perfectFor:"Law firms, real estate, healthcare, e-commerce brands",
-    features:["10+ pages, full custom","Strategy session + funnel mapping","Advanced SEO + analytics","Booking systems / e-commerce","CRM integrations","Copywriting support"],
-    cta:"Scale with Scale",
-    timelineNote:"Typical timeline: 14 days (rush 10 days for an additional $800).",
+  {
+    slug: "scale",
+    name: "Scale",
+    price: 7000,
+    displayPrice: "$7,000",
+    days: 14,
+    rushDays: 10,
+    rushFee: 800,
+    blurb:
+      "10+ pages, full custom design. Strategy (brand/positioning/funnel), advanced SEO + analytics, booking/e-commerce/CRM, copy support.",
+    perfectFor: "Law firms, real estate, healthcare, e-commerce brands",
+    features: [
+      "10+ pages, full custom",
+      "Strategy session + funnel mapping",
+      "Advanced SEO + analytics",
+      "Booking systems / e-commerce",
+      "CRM integrations",
+      "Copywriting support",
+    ],
+    cta: "Scale with Scale",
+    timelineNote:
+      "Typical timeline: 14 days (rush 10 days for an additional $800).",
   },
 ];
 
-/* ROUTER + HELPERS */
+// Router
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash || "#/");
   useEffect(() => {
@@ -63,21 +155,37 @@ function useHashRoute() {
   const query = Object.fromEntries(new URLSearchParams(clean.split("?")[1] || ""));
   return { path: path || "", rest, query, raw: hash };
 }
-function navigate(to) { window.location.hash = to.startsWith("#") ? to : `#${to}`; }
-function encodeFormData(data) { return new URLSearchParams(data).toString(); }
+function navigate(to) {
+  window.location.hash = to.startsWith("#") ? to : `#${to}`;
+}
 
-/* APP */
+// Netlify form helper
+function encodeFormData(data) {
+  return new URLSearchParams(data).toString();
+}
+
 export default function App() {
-  const styleVars = useMemo(() => ({
-    "--clr-neutral": theme.neutral, "--clr-secondary": theme.secondary,
-    "--clr-accent": theme.accent, "--clr-accent-hover": theme.accentHover, "--clr-subtle": theme.subtle,
-    "--ts-p": `${typeScale.p}px`,
-    "--ts-h6": `${typeScale.h6}px`, "--ts-h5": `${typeScale.h5}px`, "--ts-h4": `${typeScale.h4}px`,
-    "--ts-h3": `${typeScale.h3}px`, "--ts-h2": `${typeScale.h2}px`, "--ts-h1": `${typeScale.h1}px`,
-  }), []);
+  const styleVars = useMemo(
+    () => ({
+      "--clr-neutral": theme.neutral,
+      "--clr-secondary": theme.secondary,
+      "--clr-accent": theme.accent,
+      "--clr-accent-hover": theme.accentHover,
+      "--clr-subtle": theme.subtle,
+      "--ts-p": `${typeScale.p}px`,
+      "--ts-h6": `${typeScale.h6}px`,
+      "--ts-h5": `${typeScale.h5}px`,
+      "--ts-h4": `${typeScale.h4}px`,
+      "--ts-h3": `${typeScale.h3}px`,
+      "--ts-h2": `${typeScale.h2}px`,
+      "--ts-h1": `${typeScale.h1}px`,
+    }),
+    []
+  );
 
   const route = useHashRoute();
 
+  // Scroll request (from Why Us -> Packages)
   useEffect(() => {
     const target = sessionStorage.getItem("scrollTo");
     if (target && (route.path === "" || route.path === "/")) {
@@ -88,12 +196,13 @@ export default function App() {
   }, [route.path]);
 
   return (
-    <div style={styleVars} className="min-h-screen overflow-x-hidden bg-[var(--clr-neutral)] text-[var(--clr-secondary)]">
+    <div
+      style={styleVars}
+      className="min-h-screen overflow-x-hidden bg-[var(--clr-neutral)] text-[var(--clr-secondary)]"
+    >
       <style>{`
         html, body, #root { height: 100%; overflow-x: hidden; }
         :root { --container: 1280px; }
-
-        /* Type system */
         .ts-p { font-size: var(--ts-p); letter-spacing: 0; line-height: 1.5; }
         .ts-h6 { font-size: var(--ts-h6); letter-spacing: -0.005em; line-height: 1.3; }
         .ts-h5 { font-size: var(--ts-h5); letter-spacing: -0.01em; line-height: 1.3; }
@@ -101,55 +210,51 @@ export default function App() {
         .ts-h3 { font-size: var(--ts-h3); letter-spacing: -0.015em; line-height: 1.2; }
         .ts-h2 { font-size: var(--ts-h2); letter-spacing: -0.018em; line-height: 1.1; }
         .ts-h1 { font-size: var(--ts-h1); letter-spacing: -0.02em; line-height: 1.0; }
-
-        /* Grid + cards */
-        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; } /* 16px gap (8-pt) */
+        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }  /* 16px gap (8-pt grid) */
         @media (min-width: 1024px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 2rem; } }
         .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
-
         .btn-accent { background: var(--clr-accent); color: white; }
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* --- MOBILE COMPACT MODE ≤480px --- */
+        /* Mobile compaction while keeping p=16 baseline */
         @media (max-width: 480px){
-          /* downshift headings 1–2 steps; keep body at 16 */
           :root {
-            --ts-h6: 16px;
-            --ts-h5: 18px;
-            --ts-h4: 21px;
-            --ts-h3: 26px;
-            --ts-h2: 32px;
-            --ts-h1: 44px;
+            --ts-h6: 18px; /* down a step but still readable */
+            --ts-h5: 22px;
+            --ts-h4: 28px;
+            --ts-h3: 34px;
+            --ts-h2: 40px;
+            --ts-h1: 48px;
           }
-
-          /* global section spacing tighter */
-          section { padding-top: 16px !important; padding-bottom: 16px !important; }
-
-          /* card padding tighter */
-          .card.p-6 { padding: 12px !important; }
-
-          /* inputs/buttons compact (8-pt friendly) */
-          input, select, textarea { padding: 10px !important; font-size: 16px; }
-          .btn-accent { padding: 8px 14px !important; border-radius: 9999px; }
-
-          /* containers a hair tighter on sides */
-          .mx-auto.max-w-\\[var\\(--container\\)\\].px-6 { padding-left: 14px; padding-right: 14px; }
-
-          .tight-block { margin-bottom: 12px !important; }
+          .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
+          .tight-block { margin-bottom: 16px !important; }
+          .card { border-radius: 1rem; }
+          .card.p-6 { padding: 16px !important; } /* 8-pt */
+          .grid-12 { gap: 16px; } /* 8-pt */
+          .stack-tight > * + * { margin-top: 12px; } /* visual, ok */
         }
       `}</style>
 
       <Header />
 
-      {route.path === "" ? <Home /> :
-       route.path === "why-us" ? <WhyUs /> :
-       route.path === "brief" && route.rest[0] ? <Brief slug={route.rest[0]} /> :
-       route.path === "pay" && route.rest[0] ? <Pay slug={route.rest[0]} /> :
-       route.path === "thank-you" ? <ThankYou /> :
-       route.path === "privacy" ? <PrivacyPolicy /> :
-       route.path === "tech-terms" ? <TechTerms /> :
-       <NotFound />}
+      {route.path === "" ? (
+        <Home />
+      ) : route.path === "why-us" ? (
+        <WhyUs />
+      ) : route.path === "brief" && route.rest[0] ? (
+        <Brief slug={route.rest[0]} />
+      ) : route.path === "pay" && route.rest[0] ? (
+        <Pay slug={route.rest[0]} />
+      ) : route.path === "thank-you" ? (
+        <ThankYou />
+      ) : route.path === "privacy" ? (
+        <PrivacyPolicy />
+      ) : route.path === "tech-terms" ? (
+        <TechTerms />
+      ) : (
+        <NotFound />
+      )}
 
       <Footer />
       <NetlifyHiddenForms />
@@ -157,7 +262,8 @@ export default function App() {
   );
 }
 
-/* HEADER (logo = home, burger autocloses) */
+/* ---------------- Header ---------------- */
+
 function Header() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -165,7 +271,11 @@ function Header() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const linkAndClose = (handler) => (e) => { handler?.(e); setOpen(false); };
+
+  const linkAndClose = (handler) => (e) => {
+    handler?.(e);
+    setOpen(false);
+  };
 
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
@@ -184,7 +294,12 @@ function Header() {
       </div>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{height:0, opacity:0}} animate={{height:"auto", opacity:1}} exit={{height:0, opacity:0}} className="md:hidden border-t border-[var(--clr-subtle)] bg-white">
+          <motion.div
+            initial={{height:0, opacity:0}}
+            animate={{height:"auto", opacity:1}}
+            exit={{height:0, opacity:0}}
+            className="md:hidden border-t border-[var(--clr-subtle)] bg-white"
+          >
             <div className="px-6 py-3 flex flex-col gap-2">
               <a href="#/" onClick={linkAndClose()} className="ts-h6 py-2">Home</a>
               <a href="#/why-us" onClick={linkAndClose()} className="ts-h6 py-2">Why us</a>
@@ -198,13 +313,19 @@ function Header() {
     </div>
   );
 }
+
 function scrollToId(id) {
   const el = document.getElementById(id);
-  if (!el) { sessionStorage.setItem("scrollTo", id); navigate("/"); }
-  else { el.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  if (!el) {
+    sessionStorage.setItem("scrollTo", id);
+    navigate("/"); // go home
+  } else {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
-/* PAGES */
+/* ---------------- Pages ---------------- */
+
 function Home() {
   const [index, setIndex] = useState(0);
   const timeoutRef = useRef(null);
@@ -250,9 +371,15 @@ function Home() {
                 <div className="relative">
                   <div className="ts-h6 text-slate-500 mb-2">What clients want</div>
                   <ul className="space-y-2">
-                    {["One goal per page (buy/book/call)","Social proof early + clear value","Fast, mobile-first, accessible","SEO structure and trackable results"].map((t) => (
+                    {[
+                      "One goal per page (buy/book/call)",
+                      "Social proof early + clear value",
+                      "Fast, mobile-first, accessible",
+                      "SEO structure and trackable results",
+                    ].map((t) => (
                       <li key={t} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/><span className="ts-h6">{t}</span>
+                        <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/>
+                        <span className="ts-h6">{t}</span>
                       </li>
                     ))}
                   </ul>
@@ -264,31 +391,44 @@ function Home() {
       </section>
 
       {/* Work */}
-      <section id="work">
+      <section id="work" className="py-10 lg:py-24">
         <div className="mx-auto max-w-[var(--container)] px-6">
-          <div className="mb-4 md:mb-6">
+          <div className="mb-6">
             <h2 className="ts-h2 font-semibold">Showcase projects</h2>
-            <p className="ts-h6 text-slate-600 mt-1 md:mt-2">Swap each slide background with your image later. Subtle auto-play with manual control.</p>
+            <p className="ts-h6 text-slate-600 mt-2">Swap each slide background with your image later. Subtle auto-play with manual control.</p>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-[var(--clr-subtle)]">
             <div className="aspect-[4/3] md:aspect-[16/9] relative">
               <AnimatePresence mode="wait">
-                <motion.div key={index} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.6 }} className="absolute inset-0" style={{ background: showcase[index].bg }}>
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.6 }}
+                  className="absolute inset-0"
+                  style={{ background: showcase[index].bg }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/25 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 text-white">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 text-white">
                     <div className="ts-h4 font-semibold">{showcase[index].title}</div>
                     <div className="ts-h6 opacity-90 mt-1">{showcase[index].caption}</div>
-                    <div className="mt-2 md:mt-3 ts-h6 inline-flex items-center gap-2 opacity-90">
+                    <div className="mt-3 ts-h6 inline-flex items-center gap-2 opacity-90">
                       <Star className="w-4 h-4"/> Replace with project screenshot
                     </div>
                   </div>
                 </motion.div>
               </AnimatePresence>
             </div>
-            <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-full">
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-full">
               {showcase.map((_, i) => (
-                <button key={i} onClick={() => setIndex(i)} aria-label={`Show slide ${i+1}`} className={cx("h-2.5 rounded-full transition", i === index ? "bg-[var(--clr-accent)] w-6" : "bg-slate-300 w-2.5 hover:bg-slate-400")} />
+                <button
+                  key={i}
+                  onClick={() => setIndex(i)}
+                  aria-label={`Show slide ${i+1}`}
+                  className={cx("h-2.5 rounded-full transition", i === index ? "bg-[var(--clr-accent)] w-6" : "bg-slate-300 w-2.5 hover:bg-slate-400")}
+                />
               ))}
             </div>
           </div>
@@ -296,15 +436,15 @@ function Home() {
       </section>
 
       {/* Approach */}
-      <section id="approach">
+      <section id="approach" className="py-10 lg:py-24">
         <div className="mx-auto max-w-[var(--container)] px-6 grid-12 items-start">
           <div className="col-span-4 lg:col-span-5">
-            <h2 className="ts-h2 font-semibold mb-2 md:mb-3">A psychology-backed approach</h2>
+            <h2 className="ts-h2 font-semibold mb-3">A psychology-backed approach</h2>
             <p className="ts-h6 text-slate-600 max-w-xl">
               Users need to know, trust, like and feel something. We structure pages around one goal, bring value and proof above the fold, reduce friction, and use micro-interactions that reward intent—not distract from it.
             </p>
           </div>
-          <div className="col-span-4 lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-0">
+          <div className="col-span-4 lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-6 md:mt-0">
             {[
               { icon: LineChart, title: "Clarity over clever", text: "Single goal per page. Action-oriented copy. Visible CTAs." },
               { icon: Shield, title: "Trust fast", text: "Social proof, guarantees, and transparent pricing reduce risk." },
@@ -313,7 +453,7 @@ function Home() {
             ].map(({ icon: Icon, title, text }) => (
               <div key={title} className="card p-6">
                 <Icon className="w-6 h-6 text-[var(--clr-accent)]"/>
-                <div className="ts-h5 font-semibold mt-2 md:mt-3">{title}</div>
+                <div className="ts-h5 font-semibold mt-3">{title}</div>
                 <p className="ts-h6 text-slate-600 mt-1">{text}</p>
               </div>
             ))}
@@ -322,12 +462,19 @@ function Home() {
       </section>
 
       {/* Packages */}
-      <section id="packages" className="bg-white border-y border-[var(--clr-subtle)]">
+      <section id="packages" className="py-10 lg:py-24 bg-white border-y border-[var(--clr-subtle)]">
         <div className="mx-auto max-w-[var(--container)] px-6">
-          <h2 className="ts-h2 font-semibold mb-4 md:mb-6">Packages</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <h2 className="ts-h2 font-semibold mb-6">Packages</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {packages.map((p) => (
-              <motion.div key={p.slug} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className={cx("card p-6 flex flex-col", p.highlight && "ring-2 ring-[var(--clr-accent)]")}>
+              <motion.div
+                key={p.slug}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className={cx("card p-6 flex flex-col", p.highlight && "ring-2 ring-[var(--clr-accent)]")}
+              >
                 <div className="flex items-baseline justify-between">
                   <div className="ts-h4 font-semibold">{p.name}</div>
                   <div className="ts-h3 font-semibold">{p.displayPrice}</div>
@@ -335,40 +482,46 @@ function Home() {
                 <div className="ts-h6 text-slate-600 mt-1">{p.blurb}</div>
                 <div className="ts-h6 text-slate-500 mt-2">Perfect for: {p.perfectFor}</div>
                 <div className="ts-h6 text-slate-600 mt-2">{p.timelineNote}</div>
-                <ul className="mt-2 md:mt-3 space-y-2">
+                <ul className="mt-3 space-y-2">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/><span className="ts-h6">{f}</span>
+                      <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/>
+                      <span className="ts-h6">{f}</span>
                     </li>
                   ))}
                 </ul>
-                <a href={`#/brief/${p.slug}`} className="btn-accent px-5 py-2 rounded-full ts-h6 inline-flex items-center gap-2 mt-4 md:mt-5 self-start">
+                <a
+                  href={`#/brief/${p.slug}`}
+                  className="btn-accent px-5 py-2 rounded-full ts-h6 inline-flex items-center gap-2 mt-5 self-start"
+                >
                   {p.cta} <ArrowRight className="w-4 h-4"/>
                 </a>
               </motion.div>
             ))}
           </div>
-          <div className="ts-h6 text-slate-500 mt-4 md:mt-6">* 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.</div>
+          <div className="ts-h6 text-slate-500 mt-6">
+            * 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.
+          </div>
         </div>
       </section>
 
       {/* CTA strip */}
-      <section>
+      <section className="py-8 tight-section">
         <div className="mx-auto max-w-[var(--container)] px-6">
           <div className="card p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="ts-h4 font-semibold">Two new project slots open this month.</div>
-            <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="btn-accent rounded-full ts-h6 inline-flex items-center gap-2"><Calendar className="w-4 h-4"/> Contact</a>
+            <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"><Calendar className="w-4 h-4"/> Contact</a>
           </div>
         </div>
       </section>
 
       {/* Contact */}
-      <section id="contact">
+      <section id="contact" className="py-10 lg:py-24 tight-section">
         <div className="mx-auto max-w-[var(--container)] px-6 grid-12">
           <div className="col-span-4 lg:col-span-5">
             <h2 className="ts-h2 font-semibold">Let’s build something that pays for itself</h2>
             <p className="ts-h6 text-slate-600 mt-2">Genuine questions welcome. Tell us a little about your project and we’ll reply fast.</p>
-            <div className="mt-4 md:mt-6 flex items-center gap-4 text-slate-600 ts-h6">
+            <div className="mt-6 flex items-center gap-4 text-slate-600 ts-h6">
               <Mail className="w-5 h-5"/> contact@citeks.net
             </div>
             <div className="mt-2 flex items-center gap-4 text-slate-600 ts-h6">
@@ -386,27 +539,36 @@ function Home() {
 
 function WhyUs() {
   return (
-    <section>
+    <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h1 font-semibold mb-3 md:mb-4">Why choose CITEKS</h1>
+        <h1 className="ts-h1 font-semibold mb-4">Why choose CITEKS</h1>
         <p className="ts-h6 text-slate-600 max-w-3xl">
           We combine clear information architecture with persuasive but honest messaging. Our pages center on a single goal, present value and proof early, reduce cognitive load, and remove friction so people can act with confidence. We keep motion purposeful and copy specific. You get a site that looks premium and quietly guides users to say yes.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
           {[
-            ["Clarity beats clever","People decide faster when choices are fewer, labels are plain, and the next step is obvious. We design for scanning and quick decisions."],
-            ["Trust quickly","We surface proof early — reviews, results, guarantees, and transparent pricing — to lower perceived risk and boost confidence."],
-            ["Friction kills conversions","We cut unnecessary steps, optimize forms, and keep load times tight. The easiest path wins."],
-            ["Motion with restraint","Micro-interactions reward intent and provide feedback without stealing attention from the goal."],
+            ["Clarity beats clever", "People decide faster when choices are fewer, labels are plain, and the next step is obvious. We design for scanning and quick decisions."],
+            ["Trust quickly", "We surface proof early — reviews, results, guarantees, and transparent pricing — to lower perceived risk and boost confidence."],
+            ["Friction kills conversions", "We cut unnecessary steps, optimize forms, and keep load times tight. The easiest path wins."],
+            ["Motion with restraint", "Micro-interactions reward intent and provide feedback without stealing attention from the goal."],
           ].map(([title, text]) => (
             <div key={title} className="card p-6">
               <div className="ts-h4 font-semibold">{title}</div>
-              <p className="ts-h6 text-slate-600 mt-1 md:mt-2">{text}</p>
+              <p className="ts-h6 text-slate-600 mt-2">{text}</p>
             </div>
           ))}
         </div>
-        <div className="mt-6 md:mt-8">
-          <a href="#/" onClick={(e) => { e.preventDefault(); sessionStorage.setItem("scrollTo","packages"); navigate("/"); }} className="btn-accent rounded-full ts-h6 inline-flex items-center gap-2">
+
+        <div className="mt-8">
+          <a
+            href="#/"
+            onClick={(e) => {
+              e.preventDefault();
+              sessionStorage.setItem("scrollTo", "packages");
+              navigate("/");
+            }}
+            className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"
+          >
             See packages <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -417,20 +579,30 @@ function WhyUs() {
 
 function NotFound() {
   return (
-    <section>
+    <section className="py-16">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h2 font-semibold mb-2">Page not found</h1>
-        <a href="#/" className="ts-h6 btn-accent rounded-full inline-flex items-center gap-2">Go home</a>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2">Go home</a>
       </div>
     </section>
   );
 }
 
-/* CONTACT FORM (unchanged logic, compact UI via CSS) */
+/* ---------------- Forms ---------------- */
+
 function ContactForm() {
-  const [form, setForm] = useState({ title:"Mr", first:"", last:"", email:"", project:"", budget:"", message:"" });
+  const [form, setForm] = useState({
+    title: "Mr",
+    first: "",
+    last: "",
+    email: "",
+    project: "",
+    budget: "",
+    message: "",
+  });
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState({});
+
   function validate() {
     const errs = {};
     if (!form.first) errs.first = "Required";
@@ -440,18 +612,39 @@ function ContactForm() {
     if (!form.budget) errs.budget = "Required";
     return errs;
   }
+
   async function submit(e) {
     e.preventDefault();
-    const errs = validate(); setErrors(errs); if (Object.keys(errs).length) return;
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+
+    const payload = {
+      "form-name": "contact",
+      ...form,
+    };
     try {
-      await fetch("/", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body: encodeFormData({ "form-name":"contact", ...form }) });
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encodeFormData(payload),
+      });
       setSent(true);
-    } catch { alert("Submission failed. Please email contact@citeks.net"); }
+    } catch {
+      alert("Submission failed. Please email contact@citeks.net");
+    }
   }
 
   return (
-    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" onSubmit={submit} className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <input type="hidden" name="form-name" value="contact" /><input type="hidden" name="bot-field" />
+    <form
+      name="contact"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      onSubmit={submit}
+      className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+    >
+      <input type="hidden" name="form-name" value="contact" />
+      <input type="hidden" name="bot-field" />
       <div>
         <label className="ts-h6 block mb-1">Title</label>
         <select value={form.title} onChange={(e)=>setForm({...form, title:e.target.value})} className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 focus-ring bg-white">
@@ -495,14 +688,15 @@ function ContactForm() {
       </div>
       <div className="md:col-span-2 flex items-center justify-between">
         <div className="ts-h6 text-slate-500">No spam. We reply within 24h.</div>
-        <button type="submit" className="btn-accent rounded-full ts-h6 inline-flex items-center gap-2"><Mail className="w-4 h-4"/> Send</button>
+        <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"><Mail className="w-4 h-4"/> Send</button>
       </div>
       {sent && <div className="md:col-span-2 ts-h6 text-green-700">Thanks! Your message is in. We’ll respond shortly.</div>}
     </form>
   );
 }
 
-/* BRIEF (required fields + uploads, OPTIONAL collapsed) */
+/* ---------------- Brief (with required fields + file upload) ---------------- */
+
 function Brief({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
   if (!pkg) return <NotFound />;
@@ -511,48 +705,85 @@ function Brief({ slug }) {
   const total = pkg.price + (rush ? pkg.rushFee : 0);
 
   const [form, setForm] = useState({
-    company:"", contact:"", email:"", phone:"", pages:"", goal:"",
-    assetsNote:"", seo:"", integrations:"", ecommerce:"", crm:"",
-    references:"", competitors:"", notes:"",
+    company: "",
+    contact: "",
+    email: "",
+    phone: "",
+    pages: "",
+    goal: "",
+    assetsNote: "",          // text notes about assets (if any)
+    seo: "",
+    integrations: "",
+    ecommerce: "",
+    crm: "",
+    references: "",
+    competitors: "",
+    notes: "",
   });
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]); // uploaded asset files
   const [errors, setErrors] = useState({});
 
   function validate() {
     const e = {};
+    // REQUIRED (everything except: notes, competitors, references, crm, ecommerce, seo, integrations)
     if (!form.company) e.company = "Required";
     if (!form.contact) e.contact = "Required";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Enter a valid email";
     if (!form.phone) e.phone = "Required";
     if (!form.pages) e.pages = "Required";
     if (!form.goal) e.goal = "Required";
-    if (!form.assetsNote && (!files || files.length === 0)) e.assetsNote = "Provide either a note or upload at least one asset file";
+    // Assets requirement: must provide either a note OR at least one file
+    if (!form.assetsNote && (!files || files.length === 0)) {
+      e.assetsNote = "Provide either a note or upload at least one asset file";
+    }
     return e;
   }
 
   async function submitBrief(e) {
     e.preventDefault();
-    const e1 = validate(); setErrors(e1); if (Object.keys(e1).length) return;
+    const e1 = validate();
+    setErrors(e1);
+    if (Object.keys(e1).length) return;
+
+    // Build multipart form for Netlify (to capture files)
     const fd = new FormData();
     fd.append("form-name", `brief-${pkg.slug}`);
     fd.append("package", pkg.name);
     fd.append("rush", rush ? "Yes" : "No");
     fd.append("total", `$${total}`);
+
     Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-    if (files?.length) Array.from(files).forEach((f) => fd.append("assetsFiles", f));
-    try { await fetch("/", { method: "POST", body: fd }); navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`); }
-    catch { alert("Submission failed. Please email contact@citeks.net"); }
+
+    // append files under same name (Netlify supports multi files)
+    if (files?.length) {
+      Array.from(files).forEach((f) => fd.append("assetsFiles", f));
+    }
+
+    try {
+      await fetch("/", { method: "POST", body: fd });
+      navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`);
+    } catch {
+      alert("Submission failed. Please email contact@citeks.net");
+    }
   }
 
   return (
-    <section>
+    <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h2 font-semibold">{pkg.name} brief</h1>
         <p className="ts-h6 text-slate-600 mt-1">
-          {pkg.displayPrice} · Typical timeline: {pkg.days} days {`(rush ${pkg.rushDays} days +$${pkg.rushFee})`}
+          {pkg.displayPrice} · Typical timeline: {pkg.days} days
+          {` (rush ${pkg.rushDays} days +$${pkg.rushFee})`}
         </p>
 
-        <form name={`brief-${pkg.slug}`} data-netlify="true" netlify-honeypot="bot-field" encType="multipart/form-data" onSubmit={submitBrief} className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 md:mt-6">
+        <form
+          name={`brief-${pkg.slug}`}
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          encType="multipart/form-data"
+          onSubmit={submitBrief}
+          className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
+        >
           <input type="hidden" name="form-name" value={`brief-${pkg.slug}`} />
           <input type="hidden" name="bot-field" />
 
@@ -560,38 +791,47 @@ function Brief({ slug }) {
             Optional rush delivery will be displayed in your total and can also be toggled on the payment page.
           </div>
 
-          {/* REQUIRED */}
+          {/* Basic info (REQUIRED) */}
           <FormField label="Company / brand" value={form.company} onChange={(v)=>setForm({...form, company:v})} error={errors.company}/>
           <FormField label="Contact name" value={form.contact} onChange={(v)=>setForm({...form, contact:v})} error={errors.contact}/>
           <FormField label="Email" type="email" value={form.email} onChange={(v)=>setForm({...form, email:v})} error={errors.email}/>
           <FormField label="Phone" value={form.phone} onChange={(v)=>setForm({...form, phone:v})} error={errors.phone}/>
+
+          {/* Project (REQUIRED) */}
           <FormField label="Goal of the site" textarea value={form.goal} onChange={(v)=>setForm({...form, goal:v})} error={errors.goal}/>
           <FormField label="Estimated pages" value={form.pages} onChange={(v)=>setForm({...form, pages:v})} error={errors.pages}/>
 
-          {/* Assets: either text OR files (REQUIRED) */}
-          <FormField label="Available assets (logo, photos, copy?) – brief notes" textarea value={form.assetsNote} onChange={(v)=>setForm({...form, assetsNote:v})} error={errors.assetsNote}/>
+          {/* Assets: either text OR files is REQUIRED */}
+          <FormField
+            label="Available assets (logo, photos, copy?) – brief notes"
+            textarea
+            value={form.assetsNote}
+            onChange={(v)=>setForm({...form, assetsNote:v})}
+            error={errors.assetsNote}
+          />
           <div>
             <label className="ts-h6 block mb-1">Upload assets (images, logos, docs)</label>
-            <input name="assetsFiles" type="file" multiple onChange={(e)=>setFiles(e.target.files)} className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"/>
-            <div className="ts-h6 text-slate-500 mt-1">Upload multiple files if needed. We’ll receive them attached.</div>
+            <input
+              name="assetsFiles"
+              type="file"
+              multiple
+              onChange={(e)=>setFiles(e.target.files)}
+              className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"
+            />
+            <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. No previews; we’ll receive them attached.</div>
           </div>
 
-          {/* OPTIONAL (collapsed) */}
-          <details className="md:col-span-2">
-            <summary className="ts-h6 cursor-pointer select-none py-2 px-3 bg-slate-50 border border-[var(--clr-subtle)] rounded-lg">Advanced (optional)</summary>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
-              <FormField label="Integrations (maps, booking, payments)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
-              <FormField label="E-commerce (if needed)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
-              <FormField label="CRM (if needed)" value={form.crm} onChange={(v)=>setForm({...form, crm:v})}/>
-              <FormField label="Reference sites (what you like)" textarea value={form.references} onChange={(v)=>setForm({...form, references:v})}/>
-              <FormField label="Competitors" value={form.competitors} onChange={(v)=>setForm({...form, competitors:v})}/>
-              <FormField label="Notes / constraints" textarea value={form.notes} onChange={(v)=>setForm({...form, notes:v})}/>
-            </div>
-          </details>
+          {/* Optional fields */}
+          <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
+          <FormField label="Integrations (maps, booking, payments)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
+          <FormField label="E-commerce (if needed)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
+          <FormField label="CRM (if needed)" value={form.crm} onChange={(v)=>setForm({...form, crm:v})}/>
+          <FormField label="Reference sites (what you like)" textarea value={form.references} onChange={(v)=>setForm({...form, references:v})}/>
+          <FormField label="Competitors" value={form.competitors} onChange={(v)=>setForm({...form, competitors:v})}/>
+          <FormField label="Notes / constraints" textarea value={form.notes} onChange={(v)=>setForm({...form, notes:v})}/>
 
-          {/* Rush + submit */}
-          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-3 md:pt-4 mt-2">
+          {/* Rush */}
+          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
             <label className="ts-h6 flex items-center gap-2">
               <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
@@ -600,7 +840,7 @@ function Brief({ slug }) {
           </div>
 
           <div className="md:col-span-2 flex items-center justify-end">
-            <button type="submit" className="btn-accent rounded-full ts-h6 inline-flex items-center gap-2">
+            <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
               Continue <ArrowRight className="w-4 h-4"/>
             </button>
           </div>
@@ -615,21 +855,34 @@ function FormField({ label, value, onChange, textarea, type = "text", error }) {
     <div>
       <label className="ts-h6 block mb-1">{label}</label>
       {textarea ? (
-        <textarea value={value} onChange={(e)=>onChange(e.target.value)} rows={4} className={cx("w-full border rounded-lg p-3 focus-ring bg-white", error?"border-red-400":"border-[var(--clr-subtle)]")} />
+        <textarea
+          value={value}
+          onChange={(e)=>onChange(e.target.value)}
+          rows={4}
+          className={cx("w-full border rounded-lg p-3 focus-ring bg-white", error?"border-red-400":"border-[var(--clr-subtle)]")}
+        />
       ) : (
-        <input type={type} value={value} onChange={(e)=>onChange(e.target.value)} className={cx("w-full border rounded-lg p-3 focus-ring bg-white", error?"border-red-400":"border-[var(--clr-subtle)]")} />
+        <input
+          type={type}
+          value={value}
+          onChange={(e)=>onChange(e.target.value)}
+          className={cx("w-full border rounded-lg p-3 focus-ring bg-white", error?"border-red-400":"border-[var(--clr-subtle)]")}
+        />
       )}
       {error && <div className="ts-h6 text-red-600 mt-1">{error}</div>}
     </div>
   );
 }
 
-/* PAYMENT + THANK YOU (unchanged logic) */
+/* ---------------- Payment (Embedded Checkout) ---------------- */
+
 function Pay({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
   if (!pkg) return <NotFound />;
+
   const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
   const initialRush = params.get("rush") === "1";
+
   const [rush, setRush] = useState(initialRush);
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState("");
@@ -639,15 +892,30 @@ function Pay({ slug }) {
     async function go() {
       try {
         const res = await fetch("/.netlify/functions/create-checkout-session", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, rush, origin: window.location.origin }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            rush,
+            origin: window.location.origin,
+          }),
         });
-        if (!res.ok) { const text = await res.text(); throw new Error(text || "Failed to create session"); }
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Failed to create session");
+        }
+
         const { clientSecret } = await res.json();
-        setClientSecret(clientSecret); setError("");
+        setClientSecret(clientSecret);
+        setError("");
       } catch (e) {
-        try { const parsed = JSON.parse(e.message); setError(parsed.error || "Could not start checkout. Please email contact@citeks.net."); }
-        catch { setError(e.message || "Could not start checkout. Please email contact@citeks.net."); }
+        try {
+          const parsed = JSON.parse(e.message);
+          setError(parsed.error || "Could not start checkout. Please email contact@citeks.net.");
+        } catch {
+          setError(e.message || "Could not start checkout. Please email contact@citeks.net.");
+        }
       }
     }
     go();
@@ -657,46 +925,72 @@ function Pay({ slug }) {
     let cleanup = () => {};
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
+
       const { loadStripe } = await import("@stripe/stripe-js");
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY);
+      const stripe = await loadStripe(
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
+      );
       if (!stripe) { setError("Stripe not available."); return; }
+
       const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
-      checkout.mount(containerRef.current); cleanup = () => checkout.destroy();
+      checkout.mount(containerRef.current);
+      cleanup = () => checkout.destroy();
     }
-    mount(); return () => cleanup();
+    mount();
+    return () => cleanup();
   }, [clientSecret]);
 
   const total = pkg.price + (rush ? pkg.rushFee : 0);
 
   return (
-    <section>
+    <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h2 font-semibold">Payment</h1>
-        <div className="card p-6 mt-4 md:mt-6">
+
+        <div className="card p-6 mt-6">
           <div className="ts-h4 font-semibold">{pkg.name}</div>
-          <div className="ts-h6 text-slate-600 mt-1">Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.</div>
-          <div className="flex items-center justify-between mt-3 md:mt-4">
+          <div className="ts-h6 text-slate-600 mt-1">
+            Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
-              <input type="checkbox" checked={rush} onChange={(e) => setRush(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={rush}
+                onChange={(e) => setRush(e.target.checked)}
+              />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
             </label>
             <div className="ts-h4 font-semibold">Total: ${total}</div>
           </div>
-          <div className="mt-4 md:mt-6">
-            {error && <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">{error}</div>}
+
+          {/* Embedded Checkout container */}
+          <div className="mt-6">
+            {error && (
+              <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">
+                {error}
+              </div>
+            )}
             <div ref={containerRef} id="checkout" className="w-full" />
           </div>
-          <div className="mt-3 ts-h6 text-slate-500">Secure payment powered by Stripe.</div>
+
+          <div className="mt-4 ts-h6 text-slate-500">
+            Secure payment powered by Stripe.
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+/* ---------------- Thank You (with session summary) ---------------- */
+
 function ThankYou() {
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState("");
   const sessionId = new URLSearchParams(window.location.hash.split("?")[1] || "").get("session_id");
+
   useEffect(() => {
     async function load() {
       if (!sessionId) return;
@@ -705,44 +999,53 @@ function ThankYou() {
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error || "Failed");
         setSummary(json);
-      } catch { setError("We received your payment, but couldn’t load the details. We’ll email you shortly."); }
+      } catch (e) {
+        setError("We received your payment, but couldn’t load the details. We’ll email you shortly.");
+      }
     }
     load();
   }, [sessionId]);
 
   return (
-    <section>
+    <section className="py-16">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h2 font-semibold mb-2">Thank you!</h1>
-        <p className="ts-h6 text-slate-600">Your payment was received. We’ll email you shortly from <b>contact@citeks.net</b> with next steps.</p>
+        <p className="ts-h6 text-slate-600">
+          Your payment was received. We’ll email you shortly from <b>contact@citeks.net</b> with next steps.
+        </p>
+
         {summary && (
-          <div className="card p-6 mt-4 md:mt-6">
+          <div className="card p-6 mt-6">
             <div className="ts-h5 font-semibold">Purchase summary</div>
-            <div className="ts-h6 text-slate-600 mt-2">
+            <div className="ts-h6 text-slate-600 mt-2 stack-tight">
               <div><b>Status:</b> {summary.payment_status}</div>
               <div><b>Transaction ID:</b> {summary.payment_intent_id}</div>
               <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
               <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
-              <div><b>Total:</b> {summary.amount_total ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}` : "—"}</div>
+              <div><b>Total:</b> {summary.amount_total
+                ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+                : "—"}</div>
             </div>
             <div className="ts-h6 text-slate-600 mt-3">
-              Forgot to include something in your brief? Send a message via the <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a> and include your Transaction ID above.
+              Forgot to include something in your brief? Send a message via the <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a> and include your Transaction ID above. We’ll attach your note to the project.
             </div>
           </div>
         )}
         {error && <div className="ts-h6 text-red-600 mt-4">{error}</div>}
-        <a href="#/" className="ts-h6 btn-accent rounded-full inline-flex items-center gap-2 mt-4">Back to home</a>
+
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
       </div>
     </section>
   );
 }
 
-/* FOOTER + HIDDEN PAGES (same as before) */
+/* ---------------- Footer (expanded) ---------------- */
+
 function Footer() {
   return (
     <footer className="pt-10 border-t border-[var(--clr-subtle)] bg-white">
       <div className="mx-auto max-w-[var(--container)] px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
             <div className="ts-h5 font-semibold">CITEKS</div>
             <div className="ts-h6 text-slate-600 mt-2">Modern sites that convert.</div>
@@ -773,32 +1076,37 @@ function Footer() {
             </ul>
           </div>
         </div>
+
         <div className="flex items-center justify-between gap-4 py-6 border-t border-[var(--clr-subtle)] mt-8">
           <div className="ts-h6">© {new Date().getFullYear()} CITEKS — All rights reserved</div>
-          <div className="ts-h6"><a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="hover:opacity-80">Pricing</a></div>
+          <div className="ts-h6">
+            <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="hover:opacity-80">Pricing</a>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
 
+/* ---------------- Hidden pages ---------------- */
+
 function PrivacyPolicy() {
   return (
-    <section>
+    <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h1 font-semibold mb-3">Privacy Policy</h1>
+        <h1 className="ts-h1 font-semibold mb-4">Privacy Policy</h1>
         <div className="card p-6 ts-h6 text-slate-700 space-y-3">
-          <p><b>Who we are.</b> CITEKS is a web design studio. Reach us at contact@citeks.net.</p>
-          <p><b>What we collect.</b> Contact/brief details and uploaded files. We do not use cookies.</p>
-          <p><b>How we use data.</b> To respond, deliver services, process payments (Stripe), and meet legal obligations.</p>
-          <p><b>Sharing.</b> Only with providers needed to operate (Netlify, Stripe). We don’t sell personal data.</p>
-          <p><b>Retention.</b> Kept only as long as needed, then deleted or anonymized.</p>
-          <p><b>Security.</b> We use reputable providers with modern security; no method is 100% secure.</p>
-          <p><b>Your rights.</b> Email us to access, correct, or delete your data.</p>
-          <p><b>International.</b> Processing may occur in the EEA/other locations via providers’ infrastructure.</p>
-          <p><b>Updates.</b> We’ll post changes here.</p>
+          <p><b>Who we are.</b> CITEKS is a web design studio focused on fast, modern websites that convert. You can reach us at contact@citeks.net.</p>
+          <p><b>What we collect.</b> When you submit the contact form or a project brief, we collect the information you provide (e.g., name, email, company, project details) and any files you upload. We do not use cookies.</p>
+          <p><b>How we use data.</b> We use your details to respond, prepare proposals, deliver services, process payments (via Stripe), and maintain records for accounting and legal compliance.</p>
+          <p><b>How we share.</b> We only share data with service providers needed to operate (e.g., Netlify for hosting, Stripe for payments). We don’t sell personal data.</p>
+          <p><b>Retention.</b> We keep information only as long as needed to provide services and meet legal obligations, then delete or anonymize it.</p>
+          <p><b>Security.</b> We use reputable providers (Netlify/Stripe) with modern security. No method is 100% secure, but we take reasonable steps to protect your data.</p>
+          <p><b>Your rights.</b> You can request access, correction, or deletion of your data by emailing contact@citeks.net.</p>
+          <p><b>International.</b> We may process data in the EEA and other locations through our providers. Transfers use appropriate safeguards provided by those providers.</p>
+          <p><b>Updates.</b> We may update this policy as our services change. We’ll post the new version here.</p>
         </div>
-        <a href="#/" className="ts-h6 btn-accent rounded-full inline-flex items-center gap-2 mt-4">Back to home</a>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
       </div>
     </section>
   );
@@ -806,38 +1114,55 @@ function PrivacyPolicy() {
 
 function TechTerms() {
   const rows = [
-    ["CTA (Call to Action)","The primary action you want a visitor to take."],
-    ["Conversion rate (CVR)","% of visitors who complete the desired action."],
-    ["IA (Information Architecture)","How content is structured/labeled for navigation."],
-    ["Responsive","Layouts that adapt to different screen sizes."],
-    ["SEO","Optimizing content/structure so search engines can rank pages."],
-    ["Schema","Structured data markup to help search engines understand content."],
-    ["CRM","System to track leads/customers and integrate forms/booking."],
-    ["Analytics","Tracking behavior and performance (e.g., conversions)."],
-    ["Accessibility","Design so people of all abilities can use the site."],
-    ["Performance","How quickly a page loads and responds."],
+    ["CTA (Call to Action)", "The primary action you want a visitor to take (e.g., call, book, buy)."],
+    ["Conversion rate (CVR)", "Percentage of visitors who complete the desired action."],
+    ["IA (Information Architecture)", "How content is structured and labeled for easy navigation."],
+    ["Responsive", "Layouts that adapt to different screen sizes (mobile/desktop)."],
+    ["SEO", "Optimizing content and structure so search engines can find and rank pages."],
+    ["Schema", "Structured data markup that helps search engines understand your content."],
+    ["CRM", "A system to track leads/customers and integrate forms/booking."],
+    ["Analytics", "Tracking user behavior and performance (e.g., conversions)."],
+    ["Accessibility", "Designing so people of all abilities can use the site (contrast, keyboard, labels)."],
+    ["Performance", "How quickly a page loads and responds to interaction."],
   ];
+
   return (
-    <section>
+    <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h1 font-semibold mb-3">Technical terms</h1>
+        <h1 className="ts-h1 font-semibold mb-4">Technical terms</h1>
         <div className="card p-6">
-          <ul className="ts-h6 text-slate-700 space-y-2">{rows.map(([t,d]) => <li key={t}><b>{t}:</b> {d}</li>)}</ul>
+          <ul className="ts-h6 text-slate-700 space-y-2">
+            {rows.map(([term, def]) => (
+              <li key={term}><b>{term}:</b> {def}</li>
+            ))}
+          </ul>
         </div>
-        <a href="#/" className="ts-h6 btn-accent rounded-full inline-flex items-center gap-2 mt-4">Back to home</a>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
       </div>
     </section>
   );
 }
 
-/* HIDDEN FORMS (Netlify detection) */
+/* ---------------- Netlify: Hidden forms so they are detected at build ---------------- */
+
 function NetlifyHiddenForms() {
   return (
     <div style={{display:"none"}}>
-      <form name="brief-starter" data-netlify="true" encType="multipart/form-data"><input name="company" /><input name="assetsFiles" type="file" /></form>
-      <form name="brief-growth" data-netlify="true" encType="multipart/form-data"><input name="company" /><input name="assetsFiles" type="file" /></form>
-      <form name="brief-scale" data-netlify="true" encType="multipart/form-data"><input name="company" /><input name="assetsFiles" type="file" /></form>
-      <form name="contact" data-netlify="true"><input name="first" /></form>
+      <form name="brief-starter" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="brief-growth" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="brief-scale" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="contact" data-netlify="true">
+        <input name="first" />
+      </form>
     </div>
   );
 }
