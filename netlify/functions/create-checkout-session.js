@@ -9,7 +9,7 @@ export async function handler(event) {
   }
 
   try {
-    const { slug, rush, origin } = JSON.parse(event.body || "{}");
+    const { slug, rush, origin, uiMode } = JSON.parse(event.body || "{}");
 
     const priceMap = {
       starter: rush ? process.env.PRICE_STARTER_RUSH : process.env.PRICE_STARTER_BASE,
@@ -22,15 +22,34 @@ export async function handler(event) {
       return { statusCode: 400, body: JSON.stringify({ error: "Invalid package" }) };
     }
 
+    const baseUrls = {
+      success: `${origin || "https://example.com"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+      cancel:  `${origin || "https://example.com"}/#/pay/${slug}?rush=${rush ? "1" : "0"}`
+    };
+
+    // Default to embedded; allow hosted fallback via uiMode flag
+    if (uiMode === "hosted") {
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{ price, quantity: 1 }],
+        success_url: baseUrls.success,
+        cancel_url: baseUrls.cancel,
+        metadata: { package: slug, rush: rush ? "true" : "false" },
+      });
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: session.url }),
+      };
+    }
+
+    // Embedded
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
       mode: "payment",
       line_items: [{ price, quantity: 1 }],
-      return_url: `${origin || "https://example.com"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-      metadata: {
-        package: slug,
-        rush: rush ? "true" : "false",
-      },
+      return_url: baseUrls.success,
+      metadata: { package: slug, rush: rush ? "true" : "false" },
     });
 
     return {
