@@ -18,11 +18,14 @@ import {
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
  * Routes: /#/, /#/why-us, /#/projects, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
- * Changes in this version (per your last request):
- * - Home showcase ratio on desktop forced to true 2:1 (no 3:1).
- * - Barber photo: robust fallbacks so it displays if the filename differs.
- * - Vigor Lab: set to Growth (not local gym) everywhere.
- * - Projects page: separator line between project groups (proximity cue), layout unchanged.
+ *
+ * This revision:
+ * - Desktop Showcase is 10% smaller (width 90%, centered), still 2:1 ratio.
+ * - Added prefers-reduced-motion handling (no showcase autoplay if user prefers reduced motion).
+ * - Mobile menu: focus trap + aria attributes for accessibility.
+ * - Stripe Embedded → Hosted fallback if embed fails/doesn’t mount in time.
+ * - Barber image fallbacks include /showcase/odd-fellow-barber.png.
+ * - “All prices in USD” note in Packages and Pay.
  */
 
 function cx(...classes) {
@@ -85,7 +88,11 @@ const showcaseSlides = [
       "Rich brown tones, stylish type, and details that reflect the craft.",
     src: "/showcase/urban-barber.png",
     // Fallbacks in case filename differs on disk
-    fallbacks: ["/showcase/barber.png", "/showcase/showcase-barber.png"],
+    fallbacks: [
+      "/showcase/odd-fellow-barber.png",
+      "/showcase/barber.png",
+      "/showcase/showcase-barber.png",
+    ],
   },
   {
     key: "sentienceworks",
@@ -117,7 +124,11 @@ const allProjects = {
     blurb:
       "A personal, editorial take with warm tones and craft details. It feels curated, not templated — with clean structure and a clear booking flow.",
     src: "/showcase/urban-barber.png",
-    fallbacks: ["/showcase/barber.png", "/showcase/showcase-barber.png"],
+    fallbacks: [
+      "/showcase/odd-fellow-barber.png",
+      "/showcase/barber.png",
+      "/showcase/showcase-barber.png",
+    ],
   },
   ai: {
     title: "SentienceWorks — AI Services (Growth)",
@@ -133,7 +144,7 @@ const allProjects = {
   },
 };
 
-// Packages (unchanged)
+// Packages (unchanged pricing)
 const packages = [
   {
     slug: "starter",
@@ -229,6 +240,20 @@ function encodeFormData(data) {
   return new URLSearchParams(data).toString();
 }
 
+/* Reduced motion hook */
+function usePrefersReducedMotion() {
+  const [prefers, setPrefers] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!mq) return;
+    const update = () => setPrefers(!!mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  return prefers;
+}
+
 /* ---------------- App ---------------- */
 
 export default function App() {
@@ -240,7 +265,8 @@ export default function App() {
     if (target && (route.path === "" || route.path === "/")) {
       sessionStorage.removeItem("scrollTo");
       const el = document.getElementById(target);
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      if (el)
+        setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     }
   }, [route.path]);
 
@@ -289,7 +315,11 @@ export default function App() {
         .img-frame { position: relative; width: 100%; }
         .img-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; }
 
-        /* Home Showcase sizing: TRUE 2:1 on desktop, constrained only on tablet/mobile */
+        /* Home Showcase sizing */
+        /* Desktop: make it 10% smaller by constraining width to 90% (height follows 2:1) */
+        @media (min-width: 1025px) {
+          .showcase-wrap { width: 90%; margin-left: auto; margin-right: auto; }
+        }
         .showcase-frame { /* desktop */ max-height: none; }
         @media (max-width: 1024px) {
           .showcase-frame { max-height: 420px; }
@@ -323,7 +353,7 @@ export default function App() {
           }
         }
 
-        /* ---------- MOBILE: two steps smaller (kept as you liked) ---------- */
+        /* ---------- MOBILE: two steps smaller ---------- */
         @media (max-width: 480px) {
           :root {
             --ts-p: 16px;
@@ -369,12 +399,45 @@ export default function App() {
 
 function Header() {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     const onResize = () => setOpen(false);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const linkAndClose = (handler) => (e) => { handler?.(e); setOpen(false); };
+
+  // Focus trap while mobile menu is open
+  useEffect(() => {
+    if (!open || !menuRef.current) return;
+    const root = menuRef.current;
+    const selectors =
+      'a, button, [tabindex]:not([tabindex="-1"]), select, input, textarea';
+    const els = Array.from(root.querySelectorAll(selectors)).filter(
+      (el) => !el.hasAttribute("disabled")
+    );
+    if (els.length) els[0].focus();
+
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const linkAndClose = (handler) => (e) => {
+    handler?.(e);
+    setOpen(false);
+  };
 
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
@@ -387,13 +450,23 @@ function Header() {
           <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="ts-h6 hover:opacity-80">Packages</a>
           <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2"><Mail className="w-4 h-4"/> Contact</a>
         </div>
-        <button className="md:hidden p-2" onClick={()=>setOpen(!open)} aria-label="Toggle menu">
+        <button
+          className="md:hidden p-2"
+          onClick={()=>setOpen(!open)}
+          aria-label="Toggle menu"
+          aria-expanded={open ? "true" : "false"}
+          aria-controls="mobile-menu"
+        >
           {open ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
         </button>
       </div>
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            ref={menuRef}
             initial={{height:0, opacity:0}}
             animate={{height:"auto", opacity:1}}
             exit={{height:0, opacity:0}}
@@ -437,7 +510,7 @@ function Home() {
   );
 }
 
-/* Hero (unchanged content and mobile sizes you liked) */
+/* Hero */
 
 function Hero() {
   return (
@@ -474,17 +547,22 @@ function Hero() {
   );
 }
 
-/* Home Showcase – rectangle 2:1 (desktop exact), tablet/mobile constrained by max-height */
+/* Home Showcase – 2:1, desktop 90% width */
 
 function ShowcaseHome() {
   const [index, setIndex] = useState(0);
   const timeoutRef = useRef(null);
+  const prefersReduced = usePrefersReducedMotion();
 
   useEffect(() => {
+    if (prefersReduced) return; // respect user preference
     timeoutRef.current && clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setIndex((i) => (i + 1) % showcaseSlides.length), 6000);
+    timeoutRef.current = setTimeout(
+      () => setIndex((i) => (i + 1) % showcaseSlides.length),
+      6000
+    );
     return () => clearTimeout(timeoutRef.current);
-  }, [index]);
+  }, [index, prefersReduced]);
 
   const slide = showcaseSlides[index];
 
@@ -498,45 +576,47 @@ function ShowcaseHome() {
           </a>
         </div>
 
-        <div className="relative border border-[var(--clr-subtle)] rounded-xl overflow-hidden">
-          <div className={cx("img-frame ar-2-1 showcase-frame")}>
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={slide.key}
-                src={slide.src}
-                alt={slide.title}
-                initial={{ opacity: 0, scale: 0.995 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.005 }}
-                transition={{ duration: 0.45 }}
-                className="img-el"
-                onError={(e)=>handleImgError(e, slide.fallbacks)}
-                loading="eager"
-              />
-            </AnimatePresence>
+        <div className="showcase-wrap">
+          <div className="relative border border-[var(--clr-subtle)] rounded-xl overflow-hidden">
+            <div className={cx("img-frame ar-2-1 showcase-frame")}>
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={slide.key}
+                  src={slide.src}
+                  alt={slide.title}
+                  initial={{ opacity: 0, scale: prefersReduced ? 1 : 0.995 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: prefersReduced ? 1 : 1.005 }}
+                  transition={{ duration: prefersReduced ? 0.01 : 0.45 }}
+                  className="img-el"
+                  onError={(e)=>handleImgError(e, slide.fallbacks)}
+                  loading="eager"
+                />
+              </AnimatePresence>
 
-            {/* Bottom caption */}
-            <div className="absolute left-0 right-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/30 to-transparent text-white">
-              <div className="ts-h6 font-semibold">{slide.title}</div>
-              <div className="ts-h6 opacity-90">{slide.caption}</div>
+              {/* Bottom caption */}
+              <div className="absolute left-0 right-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/30 to-transparent text-white">
+                <div className="ts-h6 font-semibold">{slide.title}</div>
+                <div className="ts-h6 opacity-90">{slide.caption}</div>
+              </div>
             </div>
-          </div>
 
-          {/* Dots */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur px-3 py-2 rounded-full">
-            {showcaseSlides.map((s, i) => (
-              <button
-                key={s.key}
-                onClick={() => setIndex(i)}
-                aria-label={`Show slide ${i + 1}`}
-                className={cx(
-                  "h-2.5 rounded-full transition",
-                  i === index
-                    ? "bg-[var(--clr-accent)] w-6"
-                    : "bg-slate-300 w-2.5 hover:bg-slate-400"
-                )}
-              />
-            ))}
+            {/* Dots */}
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur px-3 py-2 rounded-full">
+              {showcaseSlides.map((s, i) => (
+                <button
+                  key={s.key}
+                  onClick={() => setIndex(i)}
+                  aria-label={`Show slide ${i + 1}`}
+                  className={cx(
+                    "h-2.5 rounded-full transition",
+                    i === index
+                      ? "bg-[var(--clr-accent)] w-6"
+                      : "bg-slate-300 w-2.5 hover:bg-slate-400"
+                  )}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -617,7 +697,8 @@ function Packages() {
           ))}
         </div>
         <div className="ts-h6 text-slate-500 mt-6">
-          * 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.
+          * 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.<br/>
+          * All prices in <b>USD</b>.
         </div>
       </div>
     </section>
@@ -1093,13 +1174,14 @@ function Pay({ slug }) {
   const [error, setError] = useState("");
   const containerRef = useRef(null);
 
+  // Create an embedded session (default)
   useEffect(() => {
     async function go() {
       try {
         const res = await fetch("/.netlify/functions/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, rush, origin: window.location.origin }),
+          body: JSON.stringify({ slug, rush, origin: window.location.origin, uiMode: "embedded" }),
         });
         if (!res.ok) {
           const text = await res.text();
@@ -1120,22 +1202,59 @@ function Pay({ slug }) {
     go();
   }, [slug, rush]);
 
+  // Mount embedded; if it fails or doesn't mount in time, fallback to hosted session
   useEffect(() => {
     let cleanup = () => {};
+    let fallbackTimer;
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
-      const { loadStripe } = await import("@stripe/stripe-js");
-      const stripe = await loadStripe(
-        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
-      );
-      if (!stripe) { setError("Stripe not available."); return; }
-      const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
-      checkout.mount(containerRef.current);
-      cleanup = () => checkout.destroy();
+      try {
+        const { loadStripe } = await import("@stripe/stripe-js");
+        const stripe = await loadStripe(
+          import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
+        );
+        if (!stripe) { setError("Stripe not available."); return; }
+
+        const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
+        checkout.mount(containerRef.current);
+        cleanup = () => checkout.destroy();
+
+        // If the embed hasn't injected any content after 6s, assume blocked → hosted fallback
+        fallbackTimer = setTimeout(async () => {
+          if (!containerRef.current?.firstChild) {
+            await fallbackToHosted();
+          }
+        }, 6000);
+      } catch (err) {
+        // Hard error initializing embed → fallback
+        await fallbackToHosted();
+      }
     }
     mount();
-    return () => cleanup();
+    return () => {
+      cleanup();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientSecret]);
+
+  async function fallbackToHosted() {
+    try {
+      const res = await fetch("/.netlify/functions/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, rush, origin: window.location.origin, uiMode: "hosted" }),
+      });
+      const json = await res.json();
+      if (json?.url) {
+        window.location.href = json.url;
+      } else {
+        setError("Could not start checkout (fallback). Please email contact@citeks.net.");
+      }
+    } catch {
+      setError("Could not start checkout (fallback). Please email contact@citeks.net.");
+    }
+  }
 
   const total = pkg.price + (rush ? pkg.rushFee : 0);
 
@@ -1147,10 +1266,10 @@ function Pay({ slug }) {
         <div className="card p-6 mt-6">
           <div className="ts-h4 font-semibold">{pkg.name}</div>
           <div className="ts-h6 text-slate-600 mt-1">
-            Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
+            Base price {pkg.displayPrice}. Typical timeline {pkg.days} days. <b>All charges in USD.</b>
           </div>
 
-        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input type="checkbox" checked={rush} onChange={(e) => setRush(e.target.checked)} />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
