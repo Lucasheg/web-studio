@@ -1216,7 +1216,6 @@ function Pay({ slug }) {
   const initialRush = params.get("rush") === "1";
 
   const [rush, setRush] = useState(initialRush);
-  the
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState("");
   const containerRef = useRef(null);
