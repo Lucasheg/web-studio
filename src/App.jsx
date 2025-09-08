@@ -1038,5 +1038,3 @@ function Pay({ slug }) {
     let cleanup = () => {};
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
-
-     
