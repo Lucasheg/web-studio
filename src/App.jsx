@@ -17,8 +17,10 @@ import {
 
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
- * Routes: /#/, /#/why-us, /#/brief/:slug (starter|growth|scale), /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
- * - Netlify forms: contact + 3 info sheets (file upload supported). Required fields validated.
+ * Routes: /#/, /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms, /#/projects
+ * - Home “Showcase projects” now uses your real images (4 rotating), smaller on desktop.
+ * - New Projects page (grid with 6 items) — showcasey, not salesy.
+ * - Netlify forms (contact + 3 briefs). File upload supported. Brief validates required fields.
  * - Payment via Stripe Embedded Checkout (Netlify Functions).
  * - Thank-you pulls session status + summary from a function.
  * - Design rules: major-third type scale baseline 16px, 12/4 grid, 8pt spacing, 60/30/10 palette, high contrast.
@@ -48,27 +50,94 @@ const typeScale = {
   h1: 61.0352,
 };
 
-// Showcase (swap backgrounds with your screenshots later)
+/* ------------- PROJECT MEDIA ------------- */
+/* Public images you uploaded (served from /public/showcase/*) */
+const IMGS = {
+  law: "/showcase/harbor-sage-law.png",
+  gymHero: "/showcase/vigor-lab-hero.png",
+  gymPrograms: "/showcase/vigor-lab-programs.png",
+  barber: "/showcase/odd-fellow-barber.png",
+  museum: "/showcase/meridian-museum.png",
+  ai: "/showcase/sentienceworks-ai.png",
+};
+
+/* ------------- HOME SHOWCASE (4 items) ------------- */
 const showcase = [
   {
-    title: "Conversion-first Restaurant Site",
-    caption: "Menu sync, Google Maps, bookings — built to sell the visit.",
-    bg: "linear-gradient(135deg, #c7d2fe 0%, #93c5fd 100%)",
+    title: "Harbor & Sage Law",
+    caption: "Trust-forward counsel website for a boutique law firm.",
+    src: IMGS.law,
+    alt: "Homepage of Harbor & Sage Law website",
   },
   {
-    title: "Dentist Funnel Redesign",
-    caption: "From browse to booking in 2 clicks.",
-    bg: "linear-gradient(135deg, #fbcfe8 0%, #fecaca 100%)",
+    title: "Vigor Lab – Gym",
+    caption: "High-impact hero with clear trial CTA and value props.",
+    src: IMGS.gymHero,
+    alt: "Hero section of Vigor Lab gym homepage",
   },
   {
-    title: "Gym Landing + Trials",
-    caption: "Trial offer + urgency banner lifted sign-ups.",
-    bg: "linear-gradient(135deg, #bbf7d0 0%, #86efac 100%)",
+    title: "Odd Fellow Barber",
+    caption: "Modern barber site with pricing and quick booking flow.",
+    src: IMGS.barber,
+    alt: "Barber studio website screenshot",
   },
   {
-    title: "Boutique Barber Studio",
-    caption: "Brand, price anchors, and trust badges.",
-    bg: "linear-gradient(135deg, #fde68a 0%, #fca5a5 100%)",
+    title: "Meridian Museum",
+    caption: "A showcase-style site for exhibits and visiting info.",
+    src: IMGS.museum,
+    alt: "Museum showcase website screenshot",
+  },
+];
+
+/* ------------- PROJECTS PAGE (6 items) ------------- */
+const allProjects = [
+  {
+    title: "Harbor & Sage Law",
+    role: "Web design • Funnel • Copy support",
+    src: IMGS.law,
+    alt: "Homepage of Harbor & Sage Law website",
+    summary:
+      "Clarity-first structure with social proof and transparent services. Focus on booking a consultation.",
+  },
+  {
+    title: "Vigor Lab — Hero",
+    role: "Web design • Motion • Conversion copy",
+    src: IMGS.gymHero,
+    alt: "Hero section of Vigor Lab gym homepage",
+    summary:
+      "Headline + subline with quick-entry CTAs. Designed to push trials and class schedule exploration.",
+  },
+  {
+    title: "Vigor Lab — Programs",
+    role: "Web design • IA • Visual hierarchy",
+    src: IMGS.gymPrograms,
+    alt: "Programs section for Vigor Lab gym website",
+    summary:
+      "Simple program cards with benefits and an obvious next step. Reduces friction to sign up.",
+  },
+  {
+    title: "Odd Fellow Barber",
+    role: "Web design • Price anchors • Booking",
+    src: IMGS.barber,
+    alt: "Barber studio website screenshot",
+    summary:
+      "Premium look, concise pricing, and streamlined booking — built for quick decisions.",
+  },
+  {
+    title: "Meridian Museum",
+    role: "Web design • Content structure • Accessibility",
+    src: IMGS.museum,
+    alt: "Museum showcase website screenshot",
+    summary:
+      "Showcase-led layout with visiting info surfaced early. Clear paths for exhibits and tickets.",
+  },
+  {
+    title: "SentienceWorks AI",
+    role: "Web design • Productization • Narrative",
+    src: IMGS.ai,
+    alt: "AI integration services website screenshot",
+    summary:
+      "Story-driven presentation of AI services with proof points and scannable modules.",
   },
 ];
 
@@ -203,8 +272,6 @@ export default function App() {
       <style>{`
         html, body, #root { height: 100%; overflow-x: hidden; }
         :root { --container: 1280px; }
-
-        /* Type scale */
         .ts-p { font-size: var(--ts-p); letter-spacing: 0; line-height: 1.5; }
         .ts-h6 { font-size: var(--ts-h6); letter-spacing: -0.005em; line-height: 1.3; }
         .ts-h5 { font-size: var(--ts-h5); letter-spacing: -0.01em; line-height: 1.3; }
@@ -212,26 +279,22 @@ export default function App() {
         .ts-h3 { font-size: var(--ts-h3); letter-spacing: -0.015em; line-height: 1.2; }
         .ts-h2 { font-size: var(--ts-h2); letter-spacing: -0.018em; line-height: 1.1; }
         .ts-h1 { font-size: var(--ts-h1); letter-spacing: -0.02em; line-height: 1.0; }
-
-        /* Grid */
         .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }  /* 16px gap (8-pt grid) */
         @media (min-width: 1024px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 2rem; } }
-
-        /* Cards & buttons */
         .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
         .btn-accent { background: var(--clr-accent); color: white; }
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* Mobile: 2 steps smaller (keep p=16) */
+        /* Mobile compaction: 2 steps smaller for headings (keeps p=16 baseline) */
         @media (max-width: 480px){
           :root {
-            --ts-h6: 18px;
+            --ts-h6: 18px; /* smaller */
             --ts-h5: 22px;
             --ts-h4: 28px;
             --ts-h3: 34px;
             --ts-h2: 40px;
-            --ts-h1: 48px;
+            --ts-h1: 48px; /* key: hero headline smaller */
           }
           .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
           .tight-block { margin-bottom: 16px !important; }
@@ -239,18 +302,6 @@ export default function App() {
           .card.p-6 { padding: 16px !important; }
           .grid-12 { gap: 16px; }
           .stack-tight > * + * { margin-top: 12px; }
-        }
-
-        /* Tablet: 1 step smaller than desktop */
-        @media (min-width: 481px) and (max-width: 1023px){
-          :root {
-            --ts-h6: 19px;
-            --ts-h5: 23.5px;
-            --ts-h4: 29.5px;
-            --ts-h3: 36px;
-            --ts-h2: 44px;
-            --ts-h1: 54px;
-          }
         }
       `}</style>
 
@@ -260,14 +311,10 @@ export default function App() {
         <Home />
       ) : route.path === "why-us" ? (
         <WhyUs />
-      ) : route.path === "brief" && route.rest[0] === "starter" ? (
-        <InfoStarter slug="starter" />
-      ) : route.path === "brief" && route.rest[0] === "growth" ? (
-        <InfoGrowth slug="growth" />
-      ) : route.path === "brief" && route.rest[0] === "scale" ? (
-        <InfoScale slug="scale" />
-      ) : route.path === "brief" ? (
-        <NotFound />
+      ) : route.path === "projects" ? (
+        <Projects />
+      ) : route.path === "brief" && route.rest[0] ? (
+        <Brief slug={route.rest[0]} />
       ) : route.path === "pay" && route.rest[0] ? (
         <Pay slug={route.rest[0]} />
       ) : route.path === "thank-you" ? (
@@ -304,11 +351,12 @@ function Header() {
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
       <div className="mx-auto max-w-[var(--container)] px-6 py-2 flex items-center justify-between">
+        {/* Logo acts as home button */}
         <a href="#/" className="ts-h6 font-semibold" onClick={() => setOpen(false)}>CITEKS</a>
         <div className="hidden md:flex items-center gap-6 justify-end flex-1">
           <a href="#/" className="ts-h6 hover:opacity-80">Home</a>
           <a href="#/why-us" className="ts-h6 hover:opacity-80">Why us</a>
-          <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('work');}} className="ts-h6 hover:opacity-80">Work</a>
+          <a href="#/projects" className="ts-h6 hover:opacity-80">Projects</a>
           <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="ts-h6 hover:opacity-80">Packages</a>
           <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2"><Mail className="w-4 h-4"/> Contact</a>
         </div>
@@ -327,7 +375,7 @@ function Header() {
             <div className="px-6 py-3 flex flex-col gap-2">
               <a href="#/" onClick={linkAndClose()} className="ts-h6 py-2">Home</a>
               <a href="#/why-us" onClick={linkAndClose()} className="ts-h6 py-2">Why us</a>
-              <a href="#/" onClick={linkAndClose((e)=>{e.preventDefault(); scrollToId('work');})} className="ts-h6 py-2">Work</a>
+              <a href="#/projects" onClick={linkAndClose()} className="ts-h6 py-2">Projects</a>
               <a href="#/" onClick={linkAndClose((e)=>{e.preventDefault(); scrollToId('packages');})} className="ts-h6 py-2">Packages</a>
               <a href="#/" onClick={linkAndClose((e)=>{e.preventDefault(); scrollToId('contact');})} className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 justify-center mt-2"><Mail className="w-4 h-4"/> Contact</a>
             </div>
@@ -381,80 +429,66 @@ function Home() {
               </p>
               <div className="flex items-center gap-4 tight-block">
                 <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="btn-accent px-6 py-3 rounded-full inline-flex items-center gap-2 ts-h6"><Rocket className="w-4 h-4"/> See packages</a>
-                <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('work');}} className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">See 4 showcase projects <ArrowRight className="w-4 h-4"/></a>
+                <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">View our projects <ArrowRight className="w-4 h-4"/></a>
               </div>
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-500 ts-h6">
                 <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> 14-day polish guarantee</div>
                 <div className="flex items-center gap-2"><Zap className="w-4 h-4"/> Limited to 2 new projects this month</div>
               </div>
             </motion.div>
+
+            {/* Showcase Card (rotator) */}
             <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6, delay:.1}} className="lg:col-span-5 col-span-4">
-              <div className="card p-6 relative">
-                <div className="absolute inset-0 pointer-events-none"
-                     style={{background:"radial-gradient(600px 200px at 20% 0%, rgba(59,130,246,.08), transparent), radial-gradient(600px 200px at 80% 100%, rgba(15,23,42,.08), transparent)"}}/>
-                <div className="relative">
-                  <div className="ts-h6 text-slate-500 mb-2">What clients want</div>
-                  <ul className="space-y-2">
-                    {[
-                      "One goal per page (buy/book/call)",
-                      "Social proof early + clear value",
-                      "Fast, mobile-first, accessible",
-                      "SEO structure and trackable results",
-                    ].map((t) => (
-                      <li key={t} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/>
-                        <span className="ts-h6">{t}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="card p-0 relative overflow-hidden">
+                {/* Smaller frame on desktop */}
+                <div className="relative h-[240px] sm:h-[280px] md:h-[420px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.02 }}
+                      transition={{ duration: 0.6 }}
+                      className="absolute inset-0"
+                    >
+                      <img
+                        src={showcase[index].src}
+                        alt={showcase[index].alt}
+                        className="w-full h-full object-cover"
+                        loading="eager"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-black/25 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
+                        <div className="ts-h5 font-semibold">{showcase[index].title}</div>
+                        <div className="ts-h6 opacity-90 mt-1">{showcase[index].caption}</div>
+                        <div className="mt-3 ts-h6 inline-flex items-center gap-2 opacity-90">
+                          <Star className="w-4 h-4"/> From our recent work
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Dots */}
+                <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-white/85 backdrop-blur px-3 py-2 rounded-full">
+                  {showcase.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setIndex(i)}
+                      aria-label={`Show slide ${i+1}`}
+                      className={cx("h-2.5 rounded-full transition", i === index ? "bg-[var(--clr-accent)] w-6" : "bg-slate-300 w-2.5 hover:bg-slate-400")}
+                    />
+                  ))}
                 </div>
               </div>
+
+              {/* View Projects link under card */}
+              <div className="mt-3">
+                <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">
+                  View all projects <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Work */}
-      <section id="work" className="py-10 lg:py-24">
-        <div className="mx-auto max-w-[var(--container)] px-6">
-          <div className="mb-6">
-            <h2 className="ts-h2 font-semibold">Showcase projects</h2>
-            <p className="ts-h6 text-slate-600 mt-2">Swap each slide background with your image later. Subtle auto-play with manual control.</p>
-          </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--clr-subtle)]">
-            <div className="aspect-[4/3] md:aspect-[16/9] relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.6 }}
-                  className="absolute inset-0"
-                  style={{ background: showcase[index].bg }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/25 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 text-white">
-                    <div className="ts-h4 font-semibold">{showcase[index].title}</div>
-                    <div className="ts-h6 opacity-90 mt-1">{showcase[index].caption}</div>
-                    <div className="mt-3 ts-h6 inline-flex items-center gap-2 opacity-90">
-                      <Star className="w-4 h-4"/> Replace with project screenshot
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-full">
-              {showcase.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setIndex(i)}
-                  aria-label={`Show slide ${i+1}`}
-                  className={cx("h-2.5 rounded-full transition", i === index ? "bg-[var(--clr-accent)] w-6" : "bg-slate-300 w-2.5 hover:bg-slate-400")}
-                />
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -561,12 +595,57 @@ function Home() {
   );
 }
 
+/* -------- Projects page (showcasey, light copy) -------- */
+
+function Projects() {
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <div className="mb-6">
+          <h1 className="ts-h2 font-semibold">Selected projects</h1>
+          <p className="ts-h6 text-slate-600 max-w-2xl mt-2">
+            A few builds we like — less talk, more results. Clear structure, fast performance,
+            and design that guides users to action without shouting.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {allProjects.map((p) => (
+            <div key={p.title} className="card overflow-hidden">
+              <div className="relative h-[220px] sm:h-[280px] md:h-[360px]">
+                <img src={p.src} alt={p.alt} className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
+                  <div className="ts-h5 font-semibold">{p.title}</div>
+                  <div className="ts-h6 opacity-90">{p.role}</div>
+                </div>
+              </div>
+              <div className="p-4 md:p-6 ts-h6 text-slate-700">
+                {p.summary}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <a
+            href="#/"
+            className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"
+          >
+            Back to home <ArrowRight className="w-4 h-4 rotate-180" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function WhyUs() {
   return (
     <section className="py-10 lg:py-24">
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h1 font-semibold mb-4">Why choose CITEKS</h1>
-        <p className="ts-h6 text-slate-600 max-ww-3xl max-w-3xl">
+        <p className="ts-h6 text-slate-600 max-w-3xl">
           We combine clear information architecture with persuasive but honest messaging. Our pages center on a single goal, present value and proof early, reduce cognitive load, and remove friction so people can act with confidence. We keep motion purposeful and copy specific. You get a site that looks premium and quietly guides users to say yes.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
@@ -612,7 +691,7 @@ function NotFound() {
   );
 }
 
-/* ---------------- Contact form ---------------- */
+/* ---------------- Forms ---------------- */
 
 function ContactForm() {
   const [form, setForm] = useState({
@@ -643,7 +722,10 @@ function ContactForm() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
-    const payload = { "form-name": "contact", ...form };
+    const payload = {
+      "form-name": "contact",
+      ...form,
+    };
     try {
       await fetch("/", {
         method: "POST",
@@ -716,7 +798,160 @@ function ContactForm() {
   );
 }
 
-/* ---------------- Shared FormField ---------------- */
+/* ---------------- Brief (with required fields + file upload) ---------------- */
+
+function Brief({ slug }) {
+  const pkg = packages.find((p) => p.slug === slug);
+  if (!pkg) return <NotFound />;
+
+  const [rush, setRush] = useState(false);
+  const total = pkg.price + (rush ? pkg.rushFee : 0);
+
+  const [form, setForm] = useState({
+    company: "",
+    contact: "",
+    email: "",
+    phone: "",
+    pages: "",
+    goal: "",
+    assetsNote: "",          // text notes about assets (if any)
+    seo: "",
+    integrations: "",
+    ecommerce: "",
+    crm: "",
+    references: "",
+    competitors: "",
+    notes: "",
+  });
+  const [files, setFiles] = useState([]); // uploaded asset files
+  const [errors, setErrors] = useState({});
+
+  function validate() {
+    const e = {};
+    // REQUIRED (everything except: notes, competitors, references, crm, ecommerce, seo, integrations)
+    if (!form.company) e.company = "Required";
+    if (!form.contact) e.contact = "Required";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Enter a valid email";
+    if (!form.phone) e.phone = "Required";
+    if (!form.pages) e.pages = "Required";
+    if (!form.goal) e.goal = "Required";
+    // Assets requirement: must provide either a note OR at least one file
+    if (!form.assetsNote && (!files || files.length === 0)) {
+      e.assetsNote = "Provide either a note or upload at least one asset file";
+    }
+    return e;
+  }
+
+  async function submitBrief(e) {
+    e.preventDefault();
+    const e1 = validate();
+    setErrors(e1);
+    if (Object.keys(e1).length) return;
+
+    // Build multipart form for Netlify (to capture files)
+    const fd = new FormData();
+    fd.append("form-name", `brief-${pkg.slug}`);
+    fd.append("package", pkg.name);
+    fd.append("rush", rush ? "Yes" : "No");
+    fd.append("total", `$${total}`);
+
+    Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
+
+    // append files under same name (Netlify supports multi files)
+    if (files?.length) {
+      Array.from(files).forEach((f) => fd.append("assetsFiles", f));
+    }
+
+    try {
+      await fetch("/", { method: "POST", body: fd });
+      navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`);
+    } catch {
+      alert("Submission failed. Please email contact@citeks.net");
+    }
+  }
+
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h2 font-semibold">{pkg.name} brief</h1>
+        <p className="ts-h6 text-slate-600 mt-1">
+          {pkg.displayPrice} · Typical timeline: {pkg.days} days
+          {` (rush ${pkg.rushDays} days +$${pkg.rushFee})`}
+        </p>
+
+        <form
+          name={`brief-${pkg.slug}`}
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          encType="multipart/form-data"
+          onSubmit={submitBrief}
+          className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
+        >
+          <input type="hidden" name="form-name" value={`brief-${pkg.slug}`} />
+          <input type="hidden" name="bot-field" />
+
+          <div className="md:col-span-2 ts-h6 text-slate-600">
+            Optional rush delivery will be displayed in your total and can also be toggled on the payment page.
+          </div>
+
+          {/* Basic info (REQUIRED) */}
+          <FormField label="Company / brand" value={form.company} onChange={(v)=>setForm({...form, company:v})} error={errors.company}/>
+          <FormField label="Contact name" value={form.contact} onChange={(v)=>setForm({...form, contact:v})} error={errors.contact}/>
+          <FormField label="Email" type="email" value={form.email} onChange={(v)=>setForm({...form, email:v})} error={errors.email}/>
+          <FormField label="Phone" value={form.phone} onChange={(v)=>setForm({...form, phone:v})} error={errors.phone}/>
+
+          {/* Project (REQUIRED) */}
+          <FormField label="Goal of the site" textarea value={form.goal} onChange={(v)=>setForm({...form, goal:v})} error={errors.goal}/>
+          <FormField label="Estimated pages" value={form.pages} onChange={(v)=>setForm({...form, pages:v})} error={errors.pages}/>
+
+          {/* Assets: either text OR files is REQUIRED */}
+          <FormField
+            label="Available assets (logo, photos, copy?) – brief notes"
+            textarea
+            value={form.assetsNote}
+            onChange={(v)=>setForm({...form, assetsNote:v})}
+            error={errors.assetsNote}
+          />
+          <div>
+            <label className="ts-h6 block mb-1">Upload assets (images, logos, docs)</label>
+            <input
+              name="assetsFiles"
+              type="file"
+              multiple
+              onChange={(e)=>setFiles(e.target.files)}
+              className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"
+            />
+            <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. No previews; we’ll receive them attached.</div>
+          </div>
+
+          {/* Optional fields */}
+          <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
+          <FormField label="Integrations (maps, booking, payments)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
+          <FormField label="E-commerce (if needed)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
+          <FormField label="CRM (if needed)" value={form.crm} onChange={(v)=>setForm({...form, crm:v})}/>
+          <FormField label="Reference sites (what you like)" textarea value={form.references} onChange={(v)=>setForm({...form, references:v})}/>
+          <FormField label="Competitors" value={form.competitors} onChange={(v)=>setForm({...form, competitors:v})}/>
+          <FormField label="Notes / constraints" textarea value={form.notes} onChange={(v)=>setForm({...form, notes:v})}/>
+
+          {/* Rush */}
+          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
+            <label className="ts-h6 flex items-center gap-2">
+              <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
+              Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
+            </label>
+            <div className="ts-h5 font-semibold">Total: ${total}</div>
+          </div>
+
+          <div className="md:col-span-2 flex items-center justify-end">
+            <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
+              Continue <ArrowRight className="w-4 h-4"/>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  );
+}
 
 function FormField({ label, value, onChange, textarea, type = "text", error }) {
   return (
@@ -739,380 +974,6 @@ function FormField({ label, value, onChange, textarea, type = "text", error }) {
       )}
       {error && <div className="ts-h6 text-red-600 mt-1">{error}</div>}
     </div>
-  );
-}
-
-/* ---------------- Information Sheets (Starter, Growth, Scale) ---------------- */
-
-function InfoStarter({ slug }) {
-  const pkg = packages.find((p) => p.slug === slug);
-  if (!pkg) return <NotFound />;
-
-  const [rush, setRush] = useState(false);
-  const total = pkg.price + (rush ? pkg.rushFee : 0);
-  const [files, setFiles] = useState([]);
-
-  const [form, setForm] = useState({
-    brand_name: "",
-    value_prop: "",
-    industry: "",
-    audience: "",
-    cta_text: "",
-    location: "",
-    estimated_pages: "Home, Services, Contact",
-    accent_hex: "",
-    secondary_hex: "",
-    neutral_hex: "",
-    assetsNote: "",
-    contact_email: "",
-    contact_name: "",
-    phone: "",
-  });
-
-  const [errors, setErrors] = useState({});
-
-  function validate() {
-    const e = {};
-    if (!form.brand_name) e.brand_name = "Required";
-    if (!form.value_prop) e.value_prop = "Required";
-    if (!form.industry) e.industry = "Required";
-    if (!form.audience) e.audience = "Required";
-    if (!form.cta_text) e.cta_text = "Required";
-    if (!/^\S+@\S+\.\S+$/.test(form.contact_email)) e.contact_email = "Enter a valid email";
-    if (!form.contact_name) e.contact_name = "Required";
-    return e;
-  }
-
-  async function submit(e) {
-    e.preventDefault();
-    const e1 = validate();
-    setErrors(e1);
-    if (Object.keys(e1).length) return;
-
-    const fd = new FormData();
-    fd.append("form-name", "info-starter");
-    fd.append("package", pkg.name);
-    fd.append("rush", rush ? "Yes" : "No");
-    fd.append("total", `$${total}`);
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-    Array.from(files || []).forEach((f) => fd.append("assetsFiles", f));
-
-    try {
-      await fetch("/", { method: "POST", body: fd });
-      navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`);
-    } catch {
-      alert("Submission failed. Please email contact@citeks.net");
-    }
-  }
-
-  return (
-    <section className="py-10 lg:py-24">
-      <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h2 font-semibold">{pkg.name} — Information sheet</h1>
-        <p className="ts-h6 text-slate-600 mt-1">
-          2–3 pages. Modern, responsive, focused on conversions.
-        </p>
-
-        <form
-          name="info-starter"
-          data-netlify="true"
-          netlify-honeypot="bot-field"
-          encType="multipart/form-data"
-          onSubmit={submit}
-          className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
-        >
-          <input type="hidden" name="form-name" value="info-starter" />
-          <input type="hidden" name="bot-field" />
-
-          <div className="md:col-span-2 ts-h6 text-slate-600">
-            Fill the essentials (marked Required). Optional fields help polish the design.
-          </div>
-
-          <FormField label="Brand name" value={form.brand_name} onChange={(v)=>setForm({...form, brand_name:v})} error={errors.brand_name}/>
-          <FormField label="One-line value proposition" value={form.value_prop} onChange={(v)=>setForm({...form, value_prop:v})} error={errors.value_prop}/>
-          <FormField label="Industry / niche" value={form.industry} onChange={(v)=>setForm({...form, industry:v})} error={errors.industry}/>
-          <FormField label="Target audience" value={form.audience} onChange={(v)=>setForm({...form, audience:v})} error={errors.audience}/>
-          <FormField label="Primary CTA text" value={form.cta_text} onChange={(v)=>setForm({...form, cta_text:v})} error={errors.cta_text}/>
-          <FormField label="Location (city/area)" value={form.location} onChange={(v)=>setForm({...form, location:v})}/>
-          <FormField label="Estimated pages (2–3)" value={form.estimated_pages} onChange={(v)=>setForm({...form, estimated_pages:v})}/>
-
-          <FormField label="Accent color (hex, optional)" value={form.accent_hex} onChange={(v)=>setForm({...form, accent_hex:v})}/>
-          <FormField label="Secondary color (hex, optional)" value={form.secondary_hex} onChange={(v)=>setForm({...form, secondary_hex:v})}/>
-          <FormField label="Neutral color (hex, optional)" value={form.neutral_hex} onChange={(v)=>setForm({...form, neutral_hex:v})}/>
-
-          <FormField label="Contact name" value={form.contact_name} onChange={(v)=>setForm({...form, contact_name:v})} error={errors.contact_name}/>
-          <FormField label="Contact email" type="email" value={form.contact_email} onChange={(v)=>setForm({...form, contact_email:v})} error={errors.contact_email}/>
-          <FormField label="Phone (optional)" value={form.phone} onChange={(v)=>setForm({...form, phone:v})}/>
-
-          <FormField label="Assets notes (logos/photos/copy)" textarea value={form.assetsNote} onChange={(v)=>setForm({...form, assetsNote:v})}/>
-          <div>
-            <label className="ts-h6 block mb-1">Upload assets (optional)</label>
-            <input type="file" name="assetsFiles" multiple onChange={(e)=>setFiles(e.target.files)} className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"/>
-            <div className="ts-h6 text-slate-500 mt-1">Attach any logos, images, or docs.</div>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
-            <label className="ts-h6 flex items-center gap-2">
-              <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
-              Rush delivery (+${pkg.rushFee})
-            </label>
-            <div className="ts-h5 font-semibold">Total: ${total}</div>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-end">
-            <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
-              Continue <ArrowRight className="w-4 h-4"/>
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-}
-
-function InfoGrowth({ slug }) {
-  const pkg = packages.find((p) => p.slug === slug);
-  if (!pkg) return <NotFound />;
-
-  const [rush, setRush] = useState(false);
-  const total = pkg.price + (rush ? pkg.rushFee : 0);
-  const [files, setFiles] = useState([]);
-
-  const [form, setForm] = useState({
-    brand_name: "",
-    value_prop: "",
-    industry: "",
-    audience: "",
-    cta_text: "",
-    locations: "",
-    services_list: "",
-    integrations: "",
-    proof: "",
-    image_direction: "",
-    map_location: "",
-    contact_name: "",
-    contact_email: "",
-    phone: "",
-    assetsNote: "",
-  });
-
-  const [errors, setErrors] = useState({});
-
-  function validate() {
-    const e = {};
-    if (!form.brand_name) e.brand_name = "Required";
-    if (!form.value_prop) e.value_prop = "Required";
-    if (!form.industry) e.industry = "Required";
-    if (!form.audience) e.audience = "Required";
-    if (!form.cta_text) e.cta_text = "Required";
-    if (!form.locations) e.locations = "Required";
-    if (!form.services_list) e.services_list = "List 2–7 services";
-    if (!/^\S+@\S+\.\S+$/.test(form.contact_email)) e.contact_email = "Enter a valid email";
-    if (!form.contact_name) e.contact_name = "Required";
-    return e;
-  }
-
-  async function submit(e) {
-    e.preventDefault();
-    const e1 = validate();
-    setErrors(e1);
-    if (Object.keys(e1).length) return;
-
-    const fd = new FormData();
-    fd.append("form-name", "info-growth");
-    fd.append("package", pkg.name);
-    fd.append("rush", rush ? "Yes" : "No");
-    fd.append("total", `$${total}`);
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-    Array.from(files || []).forEach((f) => fd.append("assetsFiles", f));
-
-    try {
-      await fetch("/", { method: "POST", body: fd });
-      navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`);
-    } catch {
-      alert("Submission failed. Please email contact@citeks.net");
-    }
-  }
-
-  return (
-    <section className="py-10 lg:py-24">
-      <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h2 font-semibold">{pkg.name} — Information sheet</h1>
-        <p className="ts-h6 text-slate-600 mt-1">5–7 pages. SEO, booking/map, light integrations.</p>
-
-        <form
-          name="info-growth"
-          data-netlify="true"
-          netlify-honeypot="bot-field"
-          encType="multipart/form-data"
-          onSubmit={submit}
-          className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
-        >
-          <input type="hidden" name="form-name" value="info-growth" />
-          <input type="hidden" name="bot-field" />
-
-          <FormField label="Brand name" value={form.brand_name} onChange={(v)=>setForm({...form, brand_name:v})} error={errors.brand_name}/>
-          <FormField label="One-line value proposition" value={form.value_prop} onChange={(v)=>setForm({...form, value_prop:v})} error={errors.value_prop}/>
-          <FormField label="Industry / niche" value={form.industry} onChange={(v)=>setForm({...form, industry:v})} error={errors.industry}/>
-          <FormField label="Target audience" value={form.audience} onChange={(v)=>setForm({...form, audience:v})} error={errors.audience}/>
-          <FormField label="Primary CTA text" value={form.cta_text} onChange={(v)=>setForm({...form, cta_text:v})} error={errors.cta_text}/>
-
-          <FormField label="Locations / areas served" value={form.locations} onChange={(v)=>setForm({...form, locations:v})} error={errors.locations}/>
-          <FormField label="Services list (comma-separated, 2–7)" value={form.services_list} onChange={(v)=>setForm({...form, services_list:v})} error={errors.services_list}/>
-
-          <FormField label="Integrations (Calendly, Mailchimp, etc.)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
-          <FormField label="Social proof (reviews, awards, logos)" value={form.proof} onChange={(v)=>setForm({...form, proof:v})}/>
-          <FormField label="Image direction (optional)" value={form.image_direction} onChange={(v)=>setForm({...form, image_direction:v})}/>
-          <FormField label="Map location (address or city)" value={form.map_location} onChange={(v)=>setForm({...form, map_location:v})}/>
-
-          <FormField label="Contact name" value={form.contact_name} onChange={(v)=>setForm({...form, contact_name:v})} error={errors.contact_name}/>
-          <FormField label="Contact email" type="email" value={form.contact_email} onChange={(v)=>setForm({...form, contact_email:v})} error={errors.contact_email}/>
-          <FormField label="Phone (optional)" value={form.phone} onChange={(v)=>setForm({...form, phone:v})}/>
-
-          <FormField label="Assets notes (logos/photos/copy)" textarea value={form.assetsNote} onChange={(v)=>setForm({...form, assetsNote:v})}/>
-          <div>
-            <label className="ts-h6 block mb-1">Upload assets (optional)</label>
-            <input type="file" name="assetsFiles" multiple onChange={(e)=>setFiles(e.target.files)} className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"/>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
-            <label className="ts-h6 flex items-center gap-2">
-              <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
-              Rush delivery (+${pkg.rushFee})
-            </label>
-            <div className="ts-h5 font-semibold">Total: ${total}</div>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-end">
-            <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
-              Continue <ArrowRight className="w-4 h-4"/>
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-}
-
-function InfoScale({ slug }) {
-  const pkg = packages.find((p) => p.slug === slug);
-  if (!pkg) return <NotFound />;
-
-  const [rush, setRush] = useState(false);
-  const total = pkg.price + (rush ? pkg.rushFee : 0);
-  const [files, setFiles] = useState([]);
-
-  const [form, setForm] = useState({
-    brand_name: "",
-    positioning: "",
-    icp: "",
-    offers: "",
-    cta_text: "",
-    funnel_overview: "",
-    ecommerce: "No",
-    products_or_services: "",
-    crm: "",
-    integrations: "",
-    proof: "",
-    content_themes: "",
-    contact_name: "",
-    contact_email: "",
-    phone: "",
-    assetsNote: "",
-  });
-
-  const [errors, setErrors] = useState({});
-
-  function validate() {
-    const e = {};
-    if (!form.brand_name) e.brand_name = "Required";
-    if (!form.positioning) e.positioning = "Required";
-    if (!form.cta_text) e.cta_text = "Required";
-    if (!form.offers) e.offers = "List at least one offer";
-    if (!/^\S+@\S+\.\S+$/.test(form.contact_email)) e.contact_email = "Enter a valid email";
-    if (!form.contact_name) e.contact_name = "Required";
-    return e;
-  }
-
-  async function submit(e) {
-    e.preventDefault();
-    const e1 = validate();
-    setErrors(e1);
-    if (Object.keys(e1).length) return;
-
-    const fd = new FormData();
-    fd.append("form-name", "info-scale");
-    fd.append("package", pkg.name);
-    fd.append("rush", rush ? "Yes" : "No");
-    fd.append("total", `$${total}`);
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-    Array.from(files || []).forEach((f) => fd.append("assetsFiles", f));
-
-    try {
-      await fetch("/", { method: "POST", body: fd });
-      navigate(`/pay/${pkg.slug}?rush=${rush ? "1" : "0"}`);
-    } catch {
-      alert("Submission failed. Please email contact@citeks.net");
-    }
-  }
-
-  return (
-    <section className="py-10 lg:py-24">
-      <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h2 font-semibold">{pkg.name} — Information sheet</h1>
-        <p className="ts-h6 text-slate-600 mt-1">10+ pages. Strategy, advanced SEO/analytics, e-com/CRM.</p>
-
-        <form
-          name="info-scale"
-          data-netlify="true"
-          netlify-honeypot="bot-field"
-          encType="multipart/form-data"
-          onSubmit={submit}
-          className="card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
-        >
-          <input type="hidden" name="form-name" value="info-scale" />
-          <input type="hidden" name="bot-field" />
-
-          <FormField label="Brand name" value={form.brand_name} onChange={(v)=>setForm({...form, brand_name:v})} error={errors.brand_name}/>
-          <FormField label="Positioning statement" value={form.positioning} onChange={(v)=>setForm({...form, positioning:v})} error={errors.positioning}/>
-          <FormField label="Ideal customer profile (ICP)" value={form.icp} onChange={(v)=>setForm({...form, icp:v})}/>
-          <FormField label="Offers / packages" value={form.offers} onChange={(v)=>setForm({...form, offers:v})} error={errors.offers}/>
-          <FormField label="Primary CTA text" value={form.cta_text} onChange={(v)=>setForm({...form, cta_text:v})} error={errors.cta_text}/>
-          <FormField label="Funnel overview (A→C→C)" value={form.funnel_overview} onChange={(v)=>setForm({...form, funnel_overview:v})}/>
-
-          <FormField label="E-commerce? (Yes/No)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
-          <FormField label="Products or key services" value={form.products_or_services} onChange={(v)=>setForm({...form, products_or_services:v})}/>
-          <FormField label="CRM (HubSpot/Salesforce/other)" value={form.crm} onChange={(v)=>setForm({...form, crm:v})}/>
-          <FormField label="Integrations (booking, email, etc.)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
-          <FormField label="Social proof (reviews, awards, logos)" value={form.proof} onChange={(v)=>setForm({...form, proof:v})}/>
-          <FormField label="Content themes (blog/case topics)" value={form.content_themes} onChange={(v)=>setForm({...form, content_themes:v})}/>
-
-          <FormField label="Contact name" value={form.contact_name} onChange={(v)=>setForm({...form, contact_name:v})} error={errors.contact_name}/>
-          <FormField label="Contact email" type="email" value={form.contact_email} onChange={(v)=>setForm({...form, contact_email:v})} error={errors.contact_email}/>
-          <FormField label="Phone (optional)" value={form.phone} onChange={(v)=>setForm({...form, phone:v})}/>
-
-          <FormField label="Assets notes (logos/photos/copy)" textarea value={form.assetsNote} onChange={(v)=>setForm({...form, assetsNote:v})}/>
-          <div>
-            <label className="ts-h6 block mb-1">Upload assets (optional)</label>
-            <input type="file" name="assetsFiles" multiple onChange={(e)=>setFiles(e.target.files)} className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"/>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
-            <label className="ts-h6 flex items-center gap-2">
-              <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
-              Rush delivery (+${pkg.rushFee})
-            </label>
-            <div className="ts-h5 font-semibold">Total: ${total}</div>
-          </div>
-
-          <div className="md:col-span-2 flex items-center justify-end">
-            <button type="submit" className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2">
-              Continue <ArrowRight className="w-4 h-4"/>
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
   );
 }
 
@@ -1195,8 +1056,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-        {/* Toggle rush & show total (helps set expectations before Stripe mounts) */}
-          <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1300,7 +1160,7 @@ function Footer() {
             <ul className="ts-h6 text-slate-700 space-y-2">
               <li><a href="#/" className="hover:opacity-80">Home</a></li>
               <li><a href="#/why-us" className="hover:opacity-80">Why us</a></li>
-              <li><a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('work');}} className="hover:opacity-80">Projects</a></li>
+              <li><a href="#/projects" className="hover:opacity-80">Projects</a></li>
               <li><a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="hover:opacity-80">Contact</a></li>
             </ul>
           </div>
@@ -1340,7 +1200,7 @@ function PrivacyPolicy() {
         <h1 className="ts-h1 font-semibold mb-4">Privacy Policy</h1>
         <div className="card p-6 ts-h6 text-slate-700 space-y-3">
           <p><b>Who we are.</b> CITEKS is a web design studio focused on fast, modern websites that convert. You can reach us at contact@citeks.net.</p>
-          <p><b>What we collect.</b> When you submit the contact form or an information sheet, we collect the information you provide (e.g., name, email, company, project details) and any files you upload. We do not use cookies.</p>
+          <p><b>What we collect.</b> When you submit the contact form or a project brief, we collect the information you provide (e.g., name, email, company, project details) and any files you upload. We do not use cookies.</p>
           <p><b>How we use data.</b> We use your details to respond, prepare proposals, deliver services, process payments (via Stripe), and maintain records for accounting and legal compliance.</p>
           <p><b>How we share.</b> We only share data with service providers needed to operate (e.g., Netlify for hosting, Stripe for payments). We don’t sell personal data.</p>
           <p><b>Retention.</b> We keep information only as long as needed to provide services and meet legal obligations, then delete or anonymize it.</p>
@@ -1386,21 +1246,21 @@ function TechTerms() {
   );
 }
 
-/* ---------------- Netlify: Hidden forms for detection ---------------- */
+/* ---------------- Netlify: Hidden forms so they are detected at build ---------------- */
 
 function NetlifyHiddenForms() {
   return (
     <div style={{display:"none"}}>
-      <form name="info-starter" data-netlify="true" encType="multipart/form-data">
-        <input name="brand_name" />
+      <form name="brief-starter" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
         <input name="assetsFiles" type="file" />
       </form>
-      <form name="info-growth" data-netlify="true" encType="multipart/form-data">
-        <input name="brand_name" />
+      <form name="brief-growth" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
         <input name="assetsFiles" type="file" />
       </form>
-      <form name="info-scale" data-netlify="true" encType="multipart/form-data">
-        <input name="brand_name" />
+      <form name="brief-scale" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
         <input name="assetsFiles" type="file" />
       </form>
       <form name="contact" data-netlify="true">
