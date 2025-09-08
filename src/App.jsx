@@ -21,11 +21,13 @@ import {
  *
  * This revision:
  * - Desktop Showcase is 10% smaller (width 90%, centered), still 2:1 ratio.
- * - Added prefers-reduced-motion handling (no showcase autoplay if user prefers reduced motion).
- * - Mobile menu: focus trap + aria attributes for accessibility.
- * - Stripe Embedded → Hosted fallback if embed fails/doesn’t mount in time.
- * - Barber image fallbacks include /showcase/odd-fellow-barber.png.
- * - “All prices in USD” note in Packages and Pay.
+ * - Added prefers-reduced-motion handling for showcase autoplay.
+ * - Mobile menu: focus trap + ARIA.
+ * - Stripe Embedded → Hosted fallback if embed can’t mount.
+ * - Brief: multi-file upload mapped to assetsFile1..assetsFile10 for Netlify.
+ * - ThankYou: shows fallback Transaction ID (PI → Charge → Session) and computed total when needed.
+ * - Barber image fallbacks include odd-fellow-barber.png.
+ * - “All prices in USD” note in Packages & Pay.
  */
 
 function cx(...classes) {
@@ -994,7 +996,7 @@ function ContactForm() {
   );
 }
 
-/* ---------------- Brief (with required fields + file upload) ---------------- */
+/* ---------------- Brief (with required fields + multi-file upload) ---------------- */
 
 function Brief({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
@@ -1019,7 +1021,25 @@ function Brief({ slug }) {
     competitors: "",
     notes: "",
   });
-  const [files, setFiles] = useState([]);
+
+  // Multi-file handling (Netlify supports one file per field → we map to assetsFile1..10)
+  const MAX_FILES = 10;
+  const ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx,.key,.pages,.txt,.zip,.jpg,.jpeg,.png,.webp,.svg";
+  const [files, setFiles] = useState([]); // array<File>
+
+  function onChooseFiles(e) {
+    const added = Array.from(e.target.files || []);
+    if (!added.length) return;
+    const key = (f) => `${f.name}::${f.size}::${f.lastModified}`;
+    const next = [...files, ...added];
+    const dedup = Array.from(new Map(next.map((f) => [key(f), f])).values());
+    if (dedup.length > MAX_FILES) {
+      alert(`You can attach up to ${MAX_FILES} files for now.`);
+    }
+    setFiles(dedup.slice(0, MAX_FILES));
+    e.target.value = ""; // allow re-selecting same file
+  }
+
   const [errors, setErrors] = useState({});
 
   function validate() {
@@ -1048,7 +1068,11 @@ function Brief({ slug }) {
     fd.append("rush", rush ? "Yes" : "No");
     fd.append("total", `$${total}`);
     Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-    if (files?.length) Array.from(files).forEach((f) => fd.append("assetsFiles", f));
+
+    // Map to assetsFile1..assetsFile10 (pre-declared in index.html)
+    files.forEach((file, idx) => {
+      fd.append(`assetsFile${idx + 1}`, file);
+    });
 
     try {
       await fetch("/", { method: "POST", body: fd });
@@ -1097,16 +1121,38 @@ function Brief({ slug }) {
             onChange={(v)=>setForm({...form, assetsNote:v})}
             error={errors.assetsNote}
           />
+
+          {/* File picker (multiple) */}
           <div>
             <label className="ts-h6 block mb-1">Upload assets (images, logos, docs)</label>
             <input
-              name="assetsFiles"
+              name="assetsPicker"
               type="file"
               multiple
-              onChange={(e)=>setFiles(e.target.files)}
+              accept={ACCEPT}
+              onChange={onChooseFiles}
               className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"
             />
-            <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. We’ll receive them attached.</div>
+            <div className="ts-h6 text-slate-500 mt-1">
+              Up to {MAX_FILES} files. Keep total under ~8 MB to ensure delivery.
+            </div>
+
+            {files.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {files.map((f, i) => (
+                  <li key={i} className="ts-h6 text-slate-700 flex items-center justify-between">
+                    <span>{f.name} ({Math.round(f.size/1024)} KB)</span>
+                    <button
+                      type="button"
+                      onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
+                      className="ts-h6 underline"
+                    >
+                      remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
@@ -1170,6 +1216,7 @@ function Pay({ slug }) {
   const initialRush = params.get("rush") === "1";
 
   const [rush, setRush] = useState(initialRush);
+  the
   const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState("");
   const containerRef = useRef(null);
@@ -1324,13 +1371,24 @@ function ThankYou() {
             <div className="ts-h5 font-semibold">Purchase summary</div>
             <div className="ts-h6 text-slate-600 mt-2">
               <div><b>Status:</b> {summary.payment_status}</div>
-              <div><b>Transaction ID:</b> {summary.payment_intent_id}</div>
+              <div>
+                <b>Transaction ID:</b> {summary.payment_intent_id || summary.charge_id || summary.id}
+              </div>
               <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
               <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
-              <div><b>Total:</b> {summary.amount_total ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}` : "—"}</div>
+              <div>
+                <b>Total:</b>{" "}
+                {typeof summary.amount_total === "number"
+                  ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+                  : typeof summary.line_items_total === "number"
+                    ? `$${(summary.line_items_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+                    : "—"}
+              </div>
             </div>
             <div className="ts-h6 text-slate-600 mt-3">
-              Forgot to include something in your brief? Send a message via the <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a> and include your Transaction ID above. We’ll attach your note to the project.
+              Forgot to include something in your brief? Send a message via the{" "}
+              <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a>{" "}
+              and include your Transaction ID above. We’ll attach your note to the project.
             </div>
           </div>
         )}
@@ -1447,6 +1505,7 @@ function TechTerms() {
 }
 
 /* ---------------- Netlify: Hidden forms (detected at build) ---------------- */
+/* Keeping this is harmless, but detection now lives in index.html */
 
 function NetlifyHiddenForms() {
   return (
