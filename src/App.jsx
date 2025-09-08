@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -17,7 +17,14 @@ import {
 
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
- * Routes: /#/, /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms, /#/projects
+ * Routes: /#/, /#/why-us, /#/projects, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
+ * - Home hero + large Showcase (real screenshots, near 1:1 aspect; own section).
+ * - Projects page: clean “pasted” screenshots (no bubble), gym images grouped.
+ * - Mobile type scale = 2 steps smaller (including hero).
+ * - Netlify forms (contact + briefs, with file upload).
+ * - Stripe Embedded Checkout (Netlify Functions).
+ * - Thank-you: session summary.
+ * - Design rules honored: major-third, 12/4 grid, 8pt spacing, 60/30/10 palette.
  */
 
 function cx(...classes) {
@@ -26,14 +33,14 @@ function cx(...classes) {
 
 // Theme
 const theme = {
-  neutral: "#F5F7FB",
-  secondary: "#0F172A",
-  accent: "#3B82F6",
+  neutral: "#F5F7FB", // 60% background
+  secondary: "#0F172A", // 30% headings/cards
+  accent: "#3B82F6", // 10% CTAs
   accentHover: "#1D4ED8",
   subtle: "#E5E7EB",
 };
 
-// Type scale (Major Third 1.25) rooted at 16px
+// Major Third scale (desktop/default)
 const typeScale = {
   p: 16,
   h6: 20,
@@ -44,7 +51,74 @@ const typeScale = {
   h1: 61.0352,
 };
 
-/* ------------ PACKAGES ------------ */
+// Showcase items (home slider + projects page)
+// NOTE: ensure these files exist in /public/showcase/
+const showcaseSlides = [
+  {
+    key: "harbor-sage",
+    title: "Harbor & Sage Law — Scale",
+    caption:
+      "Editorial layout, sharp type, transparent pricing, SEO-ready practice pages.",
+    src: "/showcase/harbor-sage-law.png",
+  },
+  {
+    key: "vigor-lab-hero",
+    title: "Vigor Lab (Gym) — Starter",
+    caption:
+      "Bold, energetic, strong CTAs. Built fast and performance-optimized.",
+    src: "/showcase/vigor-lab-hero.png",
+  },
+  {
+    key: "urban-barber",
+    title: "Urban Barber — Starter",
+    caption:
+      "Rich brown tones, stylish type, and details that reflect the craft.",
+    src: "/showcase/urban-barber.png",
+  },
+  {
+    key: "sentienceworks",
+    title: "SentienceWorks (AI) — Growth",
+    caption:
+      "Futuristic palette, kinetic motion, psychological copywriting.",
+    src: "/showcase/sentienceworks-ai.png",
+  },
+];
+
+const allProjects = {
+  law: {
+    title: "Harbor & Sage Law (Scale)",
+    blurb:
+      "A full Scale build for a business law firm. Editorial layout, sharp typography, transparent pricing, and SEO-ready practice pages. Designed for trust, clarity, and conversion — every page leads to booking a consultation.",
+    src: "/showcase/harbor-sage-law.png",
+  },
+  gym: {
+    title: "Vigor Lab — Local Gym (Starter)",
+    blurb:
+      "Bold, energetic, and action-led. The pair of sections show a high-energy hero and a clear programs matrix, optimized for fast decisions and quick sign-ups.",
+    a: "/showcase/vigor-lab-hero.png",
+    b: "/showcase/vigor-lab-programs.png",
+  },
+  barber: {
+    title: "Urban Barber (Starter)",
+    blurb:
+      "A personal, editorial take with warm tones and craft details. It feels curated, not templated — with clean structure and clear booking flow.",
+    src: "/showcase/urban-barber.png",
+  },
+  ai: {
+    title: "SentienceWorks — AI Services (Growth)",
+    blurb:
+      "Purple + electric blue system with kinetic motion. Copy and layout guide attention while keeping the experience futuristic yet clear.",
+    src: "/showcase/sentienceworks-ai.png",
+  },
+  museum: {
+    title: "Meridian Museum (Concept)",
+    blurb:
+      "An editorial concept blending wood textures and brass details with clean layouts. Designed to evoke mood and presence, not sell.",
+    src: "/showcase/meridian-museum.png",
+  },
+};
+
+// Packages
 const packages = [
   {
     slug: "starter",
@@ -114,117 +188,8 @@ const packages = [
   },
 ];
 
-/* ------------ Asset helper (fixes images not loading) ------------ */
-/** Returns a public URL that works locally and on Netlify, even with a non-root base. */
-const asset = (path) => {
-  const base = (import.meta && import.meta.env && import.meta.env.BASE_URL) || "/";
-  return base.replace(/\/+$/,"/") + String(path).replace(/^\/+/,"");
-};
+/* ---------------- Router ---------------- */
 
-/* ------------ PUBLIC images (place these PNGs in /public/showcase) ------------ */
-/**
- * Make sure the files exist in your repo at:
- * public/showcase/harbor-sage-law.png
- * public/showcase/vigor-lab-hero.png
- * public/showcase/vigor-lab-programs.png
- * public/showcase/odd-fellow-barber.png
- * public/showcase/meridian-museum.png
- * public/showcase/sentienceworks-ai.png
- */
-const IMGS = {
-  law: asset("showcase/harbor-sage-law.png"),
-  gymHero: asset("showcase/vigor-lab-hero.png"),
-  gymPrograms: asset("showcase/vigor-lab-programs.png"),
-  barber: asset("showcase/odd-fellow-barber.png"),
-  museum: asset("showcase/meridian-museum.png"),
-  ai: asset("showcase/sentienceworks-ai.png"),
-};
-
-/* ------------ HOME showcase (4 rotating) ------------ */
-const showcase = [
-  {
-    title: "Harbor & Sage Law",
-    caption:
-      "Scale package for a business law firm. Editorial layout, transparent services, SEO-ready — every page leads to booking a consultation.",
-    src: IMGS.law,
-    alt: "Homepage of Harbor & Sage Law website",
-  },
-  {
-    title: "Vigor Lab — Gym",
-    caption:
-      "Starter package. Bold, energetic hero with modern shapes and strong CTAs. Built fast, responsive, and performance-optimized.",
-    src: IMGS.gymHero,
-    alt: "Hero section of Vigor Lab gym homepage",
-  },
-  {
-    title: "Odd Fellow Barber",
-    caption:
-      "Starter package. Editorial feel with warm browns and stylish type. Niche design details, clear pricing, easy booking.",
-    src: IMGS.barber,
-    alt: "Barber studio website screenshot",
-  },
-  {
-    title: "Meridian Museum",
-    caption:
-      "Custom concept. Showcase-led, atmospheric visuals and clear visiting info. Less sell, more story.",
-    src: IMGS.museum,
-    alt: "Museum showcase website screenshot",
-  },
-];
-
-/* ------------ Projects page (6 items; gym shots grouped) ------------ */
-const allProjects = [
-  {
-    title: "Harbor & Sage Law",
-    role: "Scale package • Web design • Funnel • Copy support",
-    src: IMGS.law,
-    alt: "Homepage of Harbor & Sage Law website",
-    summary:
-      "Editorial structure, trust-first messaging, SEO-ready practice pages, and a clear route to “Book a consultation.”",
-  },
-  {
-    title: "Vigor Lab — Hero",
-    role: "Starter package • Web design • Motion • Conversion copy",
-    src: IMGS.gymHero,
-    alt: "Hero section of Vigor Lab gym homepage",
-    summary:
-      "High-impact hero with sharp value props, strong CTA, and visual language that feels energetic and modern.",
-  },
-  {
-    title: "Vigor Lab — Programs",
-    role: "Starter package • IA • Visual hierarchy",
-    src: IMGS.gymPrograms,
-    alt: "Programs section for Vigor Lab gym website",
-    summary:
-      "Scannable program cards with benefits and a clear next step. Pairs with the hero to drive sign-ups.",
-  },
-  {
-    title: "Odd Fellow Barber",
-    role: "Starter package • Price anchors • Booking",
-    src: IMGS.barber,
-    alt: "Barber studio website screenshot",
-    summary:
-      "A curated, editorial feel that matches the craft. Simple pricing and streamlined booking for quick decisions.",
-  },
-  {
-    title: "SentienceWorks AI",
-    role: "Growth package • Web design • Narrative",
-    src: IMGS.ai,
-    alt: "AI integration services website screenshot",
-    summary:
-      "Futuristic palette, kinetic accents, and clear productization of services — conversion without losing depth.",
-  },
-  {
-    title: "Meridian Museum",
-    role: "Custom concept • Content structure • Accessibility",
-    src: IMGS.museum,
-    alt: "Museum showcase website screenshot",
-    summary:
-      "Atmosphere forward. Clean layouts with ticket-style CTAs, better exhibit discovery, and clear visiting info.",
-  },
-];
-
-// Router
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash || "#/");
   useEffect(() => {
@@ -234,37 +199,24 @@ function useHashRoute() {
   }, []);
   const clean = (hash || "#/").replace(/^#\/?/, "");
   const [path, ...rest] = clean.split("?")[0].split("/").filter(Boolean);
-  const query = Object.fromEntries(new URLSearchParams(clean.split("?")[1] || ""));
+  const query = Object.fromEntries(
+    new URLSearchParams(clean.split("?")[1] || "")
+  );
   return { path: path || "", rest, query, raw: hash };
 }
 function navigate(to) {
   window.location.hash = to.startsWith("#") ? to : `#${to}`;
 }
 
-// Netlify form helper
+/* ---------------- Helpers ---------------- */
+
 function encodeFormData(data) {
   return new URLSearchParams(data).toString();
 }
 
-export default function App() {
-  const styleVars = useMemo(
-    () => ({
-      "--clr-neutral": theme.neutral,
-      "--clr-secondary": theme.secondary,
-      "--clr-accent": theme.accent,
-      "--clr-accent-hover": theme.accentHover,
-      "--clr-subtle": theme.subtle,
-      "--ts-p": `${typeScale.p}px`,
-      "--ts-h6": `${typeScale.h6}px`,
-      "--ts-h5": `${typeScale.h5}px`,
-      "--ts-h4": `${typeScale.h4}px`,
-      "--ts-h3": `${typeScale.h3}px`,
-      "--ts-h2": `${typeScale.h2}px`,
-      "--ts-h1": `${typeScale.h1}px`,
-    }),
-    []
-  );
+/* ---------------- App ---------------- */
 
+export default function App() {
   const route = useHashRoute();
 
   // Scroll request (from Why Us -> Packages)
@@ -278,15 +230,29 @@ export default function App() {
   }, [route.path]);
 
   return (
-    <div
-      style={styleVars}
-      className="min-h-screen overflow-x-hidden bg-[var(--clr-neutral)] text-[var(--clr-secondary)]"
-    >
+    <div className="min-h-screen overflow-x-hidden bg-[var(--clr-neutral)] text-[var(--clr-secondary)]">
       <style>{`
-        html, body, #root { height: 100%; overflow-x: hidden; }
-        :root { --container: 1280px; }
+        /* ---------- GLOBAL VARIABLES (desktop/default) ---------- */
+        :root {
+          --clr-neutral: ${theme.neutral};
+          --clr-secondary: ${theme.secondary};
+          --clr-accent: ${theme.accent};
+          --clr-accent-hover: ${theme.accentHover};
+          --clr-subtle: ${theme.subtle};
 
-        /* Base type (desktop/tablet) */
+          /* Major Third type scale (desktop) */
+          --ts-p: ${typeScale.p}px;
+          --ts-h6: ${typeScale.h6}px;
+          --ts-h5: ${typeScale.h5}px;
+          --ts-h4: ${typeScale.h4}px;
+          --ts-h3: ${typeScale.h3}px;
+          --ts-h2: ${typeScale.h2}px;
+          --ts-h1: ${typeScale.h1}px;
+
+          --container: 1280px;
+        }
+
+        html, body, #root { height: 100%; overflow-x: hidden; }
         .ts-p { font-size: var(--ts-p); letter-spacing: 0; line-height: 1.5; }
         .ts-h6 { font-size: var(--ts-h6); letter-spacing: -0.005em; line-height: 1.3; }
         .ts-h5 { font-size: var(--ts-h5); letter-spacing: -0.01em; line-height: 1.3; }
@@ -295,32 +261,41 @@ export default function App() {
         .ts-h2 { font-size: var(--ts-h2); letter-spacing: -0.018em; line-height: 1.1; }
         .ts-h1 { font-size: var(--ts-h1); letter-spacing: -0.02em; line-height: 1.0; }
 
-        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-        @media (min-width: 1024px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 2rem; } }
+        .grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem; }
+        @media (max-width: 1024px) { .grid-12 { grid-template-columns: repeat(4, 1fr); gap: 1rem; } }
 
         .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
         .btn-accent { background: var(--clr-accent); color: white; }
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* MOBILE: drop two Major-Third steps across the board (readable p) */
-        @media (max-width: 480px){
+        /* ---------- TABLET TUNING ---------- */
+        @media (min-width: 481px) and (max-width: 1024px) {
           :root {
-            /* Two steps down mapping: h1→h3, h2→h4, h3→h5, h4→h6, h5→p; keep p smaller but legible */
-            --ts-p: 14px;          /* 16 → 14 (not extreme) */
-            --ts-h6: 16px;         /* 20 → 16 */
-            --ts-h5: 20px;         /* 25 → 20 */
-            --ts-h4: 25px;         /* 31.25 → 25 */
-            --ts-h3: 31.25px;      /* 39.06 → 31.25 */
-            --ts-h2: 39.0625px;    /* 48.83 → 39.06 */
-            --ts-h1: 39.0625px;    /* 61.03 → 39.06 (strict 2-step drop) */
+            /* one step smaller on tablet for headings */
+            --ts-h1: ${typeScale.h2}px;
+            --ts-h2: ${typeScale.h3}px;
+            --ts-h3: ${typeScale.h4}px;
+            --ts-h4: ${typeScale.h5}px;
+            --ts-h5: ${typeScale.h6}px;
+            --ts-h6: 18px;
+          }
+        }
+
+        /* ---------- MOBILE: two steps smaller across the board ---------- */
+        @media (max-width: 480px) {
+          :root {
+            --ts-p: 16px; /* keep p readable */
+            --ts-h1: ${typeScale.h3}px; /* 2 steps down */
+            --ts-h2: ${typeScale.h4}px;
+            --ts-h3: ${typeScale.h5}px;
+            --ts-h4: ${typeScale.h6}px;
+            --ts-h5: 16px;  /* equals p */
+            --ts-h6: 14px;
           }
           .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
           .tight-block { margin-bottom: 16px !important; }
           .card { border-radius: 1rem; }
-          .card.p-6 { padding: 16px !important; }
-          .grid-12 { gap: 16px; }
-          .stack-tight > * + * { margin-top: 12px; }
         }
       `}</style>
 
@@ -361,15 +336,12 @@ function Header() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-
-  const linkAndClose = (handler) => (e) => {
-    handler?.(e);
-    setOpen(false);
-  };
+  const linkAndClose = (handler) => (e) => { handler?.(e); setOpen(false); };
 
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
       <div className="mx-auto max-w-[var(--container)] px-6 py-2 flex items-center justify-between">
+        {/* Logo acts as Home */}
         <a href="#/" className="ts-h6 font-semibold" onClick={() => setOpen(false)}>CITEKS</a>
         <div className="hidden md:flex items-center gap-6 justify-end flex-1">
           <a href="#/" className="ts-h6 hover:opacity-80">Home</a>
@@ -417,265 +389,312 @@ function scrollToId(id) {
 /* ---------------- Pages ---------------- */
 
 function Home() {
-  const [index, setIndex] = useState(0);
-  const timeoutRef = useRef(null);
-  useEffect(() => {
-    timeoutRef.current && clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setIndex((i) => (i + 1) % showcase.length), 5000);
-    return () => clearTimeout(timeoutRef.current);
-  }, [index]);
-
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-x-clip">
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full"
-               style={{background:"radial-gradient(ellipse at center, rgba(59,130,246,0.15), transparent 60%)"}}/>
-          <div className="absolute -bottom-24 -right-24 w-[420px] h-[420px] rounded-full"
-               style={{background:"radial-gradient(ellipse at center, rgba(15,23,42,0.12), transparent 60%)"}}/>
-        </div>
-        <div className="mx-auto max-w-[var(--container)] px-6 pt-12 pb-10 lg:pt-28 lg:pb-24">
-          <div className="grid-12 items-center">
-            <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6}} className="lg:col-span-7 col-span-4">
-              <h1 className="ts-h1 font-semibold mb-4">
-                Websites engineered to convert -
-                <span className="block text-[var(--clr-accent)]">without stealing the spotlight.</span>
-              </h1>
-              <p className="ts-h5 text-slate-600 max-w-2xl mb-6">
-                We design and build fast, modern sites that feel premium and guide users to one clear action. Psychology-backed structure. Motion with restraint. Search-friendly. Easy to update.
-              </p>
-              <div className="flex items-center gap-4 tight-block">
-                <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="btn-accent px-6 py-3 rounded-full inline-flex items-center gap-2 ts-h6"><Rocket className="w-4 h-4"/> See packages</a>
-                <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">View our projects <ArrowRight className="w-4 h-4"/></a>
-              </div>
-              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-500 ts-h6">
-                <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> 14-day polish guarantee</div>
-                <div className="flex items-center gap-2"><Zap className="w-4 h-4"/> Limited to 2 new projects this month</div>
-              </div>
-            </motion.div>
-
-            {/* Showcase Card (rotator) */}
-            <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6, delay:.1}} className="lg:col-span-5 col-span-4">
-              <div className="card p-0 relative overflow-hidden">
-                {/* Near-original size on desktop; smaller on mobile */}
-                <div className="relative h-[300px] sm:h-[380px] md:h-[560px] lg:h-[640px]">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 1.02 }}
-                      transition={{ duration: 0.6 }}
-                      className="absolute inset-0"
-                    >
-                      <img
-                        src={showcase[index].src}
-                        alt={showcase[index].alt}
-                        className="w-full h-full object-cover"
-                        loading="eager"
-                        onError={(e) => {
-                          console.warn("Image failed to load:", e.currentTarget.src);
-                          e.currentTarget.style.display = "none";
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            parent.style.background =
-                              "linear-gradient(135deg,#e5e7eb,#cbd5e1)";
-                          }
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-tr from-black/25 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
-                        <div className="ts-h5 font-semibold">{showcase[index].title}</div>
-                        <div className="ts-h6 opacity-90 mt-1">{showcase[index].caption}</div>
-                        <div className="mt-3 ts-h6 inline-flex items-center gap-2 opacity-90">
-                          <Star className="w-4 h-4"/> From our recent work
-                        </div>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {/* Dots */}
-                <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-white/85 backdrop-blur px-3 py-2 rounded-full">
-                  {showcase.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setIndex(i)}
-                      aria-label={`Show slide ${i+1}`}
-                      className={cx("h-2.5 rounded-full transition", i === index ? "bg-[var(--clr-accent)] w-6" : "bg-slate-300 w-2.5 hover:bg-slate-400")}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* View Projects link under card */}
-              <div className="mt-3">
-                <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">
-                  View all projects <ArrowRight className="w-4 h-4" />
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Approach */}
-      <section id="approach" className="py-10 lg:py-24">
-        <div className="mx-auto max-w-[var(--container)] px-6 grid-12 items-start">
-          <div className="col-span-4 lg:col-span-5">
-            <h2 className="ts-h2 font-semibold mb-3">A psychology-backed approach</h2>
-            <p className="ts-h6 text-slate-600 max-w-xl">
-              Users need to know, trust, like and feel something. We structure pages around one goal, bring value and proof above the fold, reduce friction, and use micro-interactions that reward intent—not distract from it.
-            </p>
-          </div>
-          <div className="col-span-4 lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-6 md:mt-0">
-            {[
-              { icon: LineChart, title: "Clarity over clever", text: "Single goal per page. Action-oriented copy. Visible CTAs." },
-              { icon: Shield, title: "Trust fast", text: "Social proof, guarantees, and transparent pricing reduce risk." },
-              { icon: Zap, title: "Instant feedback", text: "Micro-interactions that guide, not distract. Motion with restraint." },
-              { icon: Rocket, title: "Friction down", text: "Mobile-first speed, accessible contrast, and minimal steps to act." },
-            ].map(({ icon: Icon, title, text }) => (
-              <div key={title} className="card p-6">
-                <Icon className="w-6 h-6 text-[var(--clr-accent)]"/>
-                <div className="ts-h5 font-semibold mt-3">{title}</div>
-                <p className="ts-h6 text-slate-600 mt-1">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Packages */}
-      <section id="packages" className="py-10 lg:py-24 bg-white border-y border-[var(--clr-subtle)]">
-        <div className="mx-auto max-w-[var(--container)] px-6">
-          <h2 className="ts-h2 font-semibold mb-6">Packages</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {packages.map((p) => (
-              <motion.div
-                key={p.slug}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className={cx("card p-6 flex flex-col", p.highlight && "ring-2 ring-[var(--clr-accent)]")}
-              >
-                <div className="flex items-baseline justify-between">
-                  <div className="ts-h4 font-semibold">{p.name}</div>
-                  <div className="ts-h3 font-semibold">{p.displayPrice}</div>
-                </div>
-                <div className="ts-h6 text-slate-600 mt-1">{p.blurb}</div>
-                <div className="ts-h6 text-slate-500 mt-2">Perfect for: {p.perfectFor}</div>
-                <div className="ts-h6 text-slate-600 mt-2">{p.timelineNote}</div>
-                <ul className="mt-3 space-y-2">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/>
-                      <span className="ts-h6">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={`#/brief/${p.slug}`}
-                  className="btn-accent px-5 py-2 rounded-full ts-h6 inline-flex items-center gap-2 mt-5 self-start"
-                >
-                  {p.cta} <ArrowRight className="w-4 h-4"/>
-                </a>
-              </motion.div>
-            ))}
-          </div>
-          <div className="ts-h6 text-slate-500 mt-6">
-            * 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.
-          </div>
-        </div>
-      </section>
-
-      {/* CTA strip */}
-      <section className="py-8 tight-section">
-        <div className="mx-auto max-w-[var(--container)] px-6">
-          <div className="card p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="ts-h4 font-semibold">Two new project slots open this month.</div>
-            <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"><Calendar className="w-4 h-4"/> Contact</a>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact */}
-      <section id="contact" className="py-10 lg:py-24 tight-section">
-        <div className="mx-auto max-w-[var(--container)] px-6 grid-12">
-          <div className="col-span-4 lg:col-span-5">
-            <h2 className="ts-h2 font-semibold">Let’s build something that pays for itself</h2>
-            <p className="ts-h6 text-slate-600 mt-2">Genuine questions welcome. Tell us a little about your project and we’ll reply fast.</p>
-            <div className="mt-6 flex items-center gap-4 text-slate-600 ts-h6">
-              <Mail className="w-5 h-5"/> contact@citeks.net
-            </div>
-            <div className="mt-2 flex items-center gap-4 text-slate-600 ts-h6">
-              <MapPin className="w-5 h-5"/> Langmyrvegen 22a • Europe/Oslo
-            </div>
-          </div>
-          <div className="col-span-4 lg:col-span-7">
-            <ContactForm />
-          </div>
-        </div>
-      </section>
+      <Hero />
+      <ShowcaseHome />
+      <Approach />
+      <Packages />
+      <ContactSection />
     </>
   );
 }
 
-/* -------- Projects page -------- */
+/* Hero */
 
-function Projects() {
+function Hero() {
   return (
-    <section className="py-10 lg:py-24">
-      <div className="mx-auto max-w-[var(--container)] px-6">
-        <div className="mb-6">
-          <h1 className="ts-h2 font-semibold">Selected projects</h1>
-          <p className="ts-h6 text-slate-600 max-w-2xl mt-2">
-            Less talk, more results. Clean structure, fast performance, and design that guides action without shouting.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {allProjects.map((p) => (
-            <div key={p.title} className="card overflow-hidden">
-              <div className="relative h-[220px] sm:h-[280px] md:h-[360px]">
-                <img
-                  src={p.src}
-                  alt={p.alt}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.warn("Image failed to load:", e.currentTarget.src);
-                    e.currentTarget.style.display = "none";
-                    const parent = e.currentTarget.parentElement;
-                    if (parent) parent.style.background = "linear-gradient(135deg,#e5e7eb,#cbd5e1)";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
-                  <div className="ts-h5 font-semibold">{p.title}</div>
-                  <div className="ts-h6 opacity-90">{p.role}</div>
-                </div>
-              </div>
-              <div className="p-4 md:p-6 ts-h6 text-slate-700">
-                {p.summary}
-              </div>
+    <section className="relative overflow-x-clip">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full"
+             style={{background:"radial-gradient(ellipse at center, rgba(59,130,246,0.15), transparent 60%)"}}/>
+        <div className="absolute -bottom-24 -right-24 w-[420px] h-[420px] rounded-full"
+             style={{background:"radial-gradient(ellipse at center, rgba(15,23,42,0.12), transparent 60%)"}}/>
+      </div>
+      <div className="mx-auto max-w-[var(--container)] px-6 pt-12 pb-10 lg:pt-28 lg:pb-24">
+        <div className="grid-12 items-center">
+          <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6}} className="lg:col-span-7 col-span-4">
+            <h1 className="ts-h1 font-semibold mb-4">
+              Websites engineered to convert -
+              <span className="block text-[var(--clr-accent)]">without stealing the spotlight.</span>
+            </h1>
+            <p className="ts-h5 text-slate-600 max-w-2xl mb-6">
+              We design and build fast, modern sites that feel premium and guide users to one clear action. Psychology-backed structure. Motion with restraint. Search-friendly. Easy to update.
+            </p>
+            <div className="flex items-center gap-4 tight-block">
+              <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="btn-accent px-6 py-3 rounded-full inline-flex items-center gap-2 ts-h6"><Rocket className="w-4 h-4"/> See packages</a>
+              <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">View projects <ArrowRight className="w-4 h-4"/></a>
             </div>
-          ))}
-        </div>
-
-        <div className="mt-8">
-          <a
-            href="#/"
-            className="btn-accent px-6 py-3 rounded-full ts-h6 inline-flex items-center gap-2"
-          >
-            Back to home <ArrowRight className="w-4 h-4 rotate-180" />
-          </a>
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-500 ts-h6">
+              <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> 14-day polish guarantee</div>
+              <div className="flex items-center gap-2"><Zap className="w-4 h-4"/> Limited to 2 new projects this month</div>
+            </div>
+          </motion.div>
+          <div className="lg:col-span-5 col-span-4" />
         </div>
       </div>
     </section>
   );
 }
+
+/* Home Showcase – big, own section, near-square ratio images */
+
+function ShowcaseHome() {
+  const [index, setIndex] = useState(0);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    timeoutRef.current && clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setIndex((i) => (i + 1) % showcaseSlides.length), 6000);
+    return () => clearTimeout(timeoutRef.current);
+  }, [index]);
+
+  const slide = showcaseSlides[index];
+
+  return (
+    <section id="work" className="py-10 lg:py-24 bg-white border-y border-[var(--clr-subtle)]">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="ts-h2 font-semibold">Showcase projects</h2>
+          <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">
+            View all projects <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+
+        <div className="relative overflow-hidden border border-[var(--clr-subtle)] rounded-xl">
+          {/* Aspect ratio ~919/886 (almost square) */}
+          <div
+            className="w-full relative"
+            style={{ aspectRatio: "919 / 886" }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={slide.key}
+                src={slide.src}
+                alt={slide.title}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.6 }}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="eager"
+              />
+            </AnimatePresence>
+
+            {/* Caption overlay (subtle) */}
+            <div className="absolute left-0 right-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black/35 to-transparent text-white">
+              <div className="ts-h5 font-semibold">{slide.title}</div>
+              <div className="ts-h6 opacity-90 mt-1">{slide.caption}</div>
+            </div>
+          </div>
+
+          {/* Dots */}
+          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/85 backdrop-blur px-3 py-2 rounded-full">
+            {showcaseSlides.map((s, i) => (
+              <button
+                key={s.key}
+                onClick={() => setIndex(i)}
+                aria-label={`Show slide ${i + 1}`}
+                className={cx(
+                  "h-2.5 rounded-full transition",
+                  i === index
+                    ? "bg-[var(--clr-accent)] w-6"
+                    : "bg-slate-300 w-2.5 hover:bg-slate-400"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Approach */
+
+function Approach() {
+  return (
+    <section id="approach" className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6 grid-12 items-start">
+        <div className="col-span-4 lg:col-span-5">
+          <h2 className="ts-h2 font-semibold mb-3">A psychology-backed approach</h2>
+          <p className="ts-h6 text-slate-600 max-w-xl">
+            Users need to know, trust, like and feel something. We structure pages around one goal, bring value and proof above the fold, reduce friction, and use micro-interactions that reward intent—not distract from it.
+          </p>
+        </div>
+        <div className="col-span-4 lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-6 md:mt-0">
+          {[
+            { icon: LineChart, title: "Clarity over clever", text: "Single goal per page. Action-oriented copy. Visible CTAs." },
+            { icon: Shield, title: "Trust fast", text: "Social proof, guarantees, and transparent pricing reduce risk." },
+            { icon: Zap, title: "Instant feedback", text: "Micro-interactions that guide, not distract. Motion with restraint." },
+            { icon: Rocket, title: "Friction down", text: "Mobile-first speed, accessible contrast, and minimal steps to act." },
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="card p-6">
+              <Icon className="w-6 h-6 text-[var(--clr-accent)]"/>
+              <div className="ts-h5 font-semibold mt-3">{title}</div>
+              <p className="ts-h6 text-slate-600 mt-1">{text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Packages */
+
+function Packages() {
+  return (
+    <section id="packages" className="py-10 lg:py-24 bg-white border-y border-[var(--clr-subtle)]">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h2 className="ts-h2 font-semibold mb-6">Packages</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {packages.map((p) => (
+            <motion.div
+              key={p.slug}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className={cx("card p-6 flex flex-col", p.highlight && "ring-2 ring-[var(--clr-accent)]")}
+            >
+              <div className="flex items-baseline justify-between">
+                <div className="ts-h4 font-semibold">{p.name}</div>
+                <div className="ts-h3 font-semibold">{p.displayPrice}</div>
+              </div>
+              <div className="ts-h6 text-slate-600 mt-1">{p.blurb}</div>
+              <div className="ts-h6 text-slate-500 mt-2">Perfect for: {p.perfectFor}</div>
+              <div className="ts-h6 text-slate-600 mt-2">{p.timelineNote}</div>
+              <ul className="mt-3 space-y-2">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-[var(--clr-accent)] mt-0.5"/>
+                    <span className="ts-h6">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={`#/brief/${p.slug}`}
+                className="btn-accent px-5 py-2 rounded-full ts-h6 inline-flex items-center gap-2 mt-5 self-start"
+              >
+                {p.cta} <ArrowRight className="w-4 h-4"/>
+              </a>
+            </motion.div>
+          ))}
+        </div>
+        <div className="ts-h6 text-slate-500 mt-6">
+          * 14-day polish guarantee after launch. Need adjustments? We’ll refine quickly.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Contact */
+
+function ContactSection() {
+  return (
+    <section id="contact" className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6 grid-12">
+        <div className="col-span-4 lg:col-span-5">
+          <h2 className="ts-h2 font-semibold">Let’s build something that pays for itself</h2>
+          <p className="ts-h6 text-slate-600 mt-2">Genuine questions welcome. Tell us a little about your project and we’ll reply fast.</p>
+          <div className="mt-6 flex items-center gap-4 text-slate-600 ts-h6">
+            <Mail className="w-5 h-5"/> contact@citeks.net
+          </div>
+          <div className="mt-2 flex items-center gap-4 text-slate-600 ts-h6">
+            <MapPin className="w-5 h-5"/> Langmyrvegen 22a • Europe/Oslo
+          </div>
+        </div>
+        <div className="col-span-4 lg:col-span-7">
+          <ContactForm />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Projects page (no bubble, “pasted on page”, gym grouped) */
+
+function Projects() {
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h1 font-semibold mb-4">Projects</h1>
+
+        {/* Law – single image */}
+        <ProjectBlock
+          title={allProjects.law.title}
+          blurb={allProjects.law.blurb}
+          images={[allProjects.law.src]}
+        />
+
+        {/* Gym – paired images grouped */}
+        <ProjectBlock
+          title={allProjects.gym.title}
+          blurb={allProjects.gym.blurb}
+          images={[allProjects.gym.a, allProjects.gym.b]}
+          twoUp
+        />
+
+        {/* Barber */}
+        <ProjectBlock
+          title={allProjects.barber.title}
+          blurb={allProjects.barber.blurb}
+          images={[allProjects.barber.src]}
+        />
+
+        {/* AI */}
+        <ProjectBlock
+          title={allProjects.ai.title}
+          blurb={allProjects.ai.blurb}
+          images={[allProjects.ai.src]}
+        />
+
+        {/* Museum */}
+        <ProjectBlock
+          title={allProjects.museum.title}
+          blurb={allProjects.museum.blurb}
+          images={[allProjects.museum.src]}
+        />
+      </div>
+    </section>
+  );
+}
+
+function ProjectBlock({ title, blurb, images, twoUp = false }) {
+  return (
+    <div className="mb-10 md:mb-16">
+      <div className="ts-h4 font-semibold">{title}</div>
+      <p className="ts-h6 text-slate-600 mt-2">{blurb}</p>
+
+      {/* Images */}
+      {twoUp ? (
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {images.map((src) => (
+            <div key={src} className="relative w-full border border-[var(--clr-subtle)] rounded-lg overflow-hidden">
+              <div style={{ aspectRatio: "919 / 886" }} className="relative w-full">
+                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4">
+          {images.map((src) => (
+            <div key={src} className="relative w-full border border-[var(--clr-subtle)] rounded-lg overflow-hidden">
+              <div style={{ aspectRatio: "919 / 886" }} className="relative w-full">
+                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Why Us ---------------- */
 
 function WhyUs() {
   return (
@@ -717,17 +736,6 @@ function WhyUs() {
   );
 }
 
-function NotFound() {
-  return (
-    <section className="py-16">
-      <div className="mx-auto max-w-[var(--container)] px-6">
-        <h1 className="ts-h2 font-semibold mb-2">Page not found</h1>
-        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2">Go home</a>
-      </div>
-    </section>
-  );
-}
-
 /* ---------------- Forms ---------------- */
 
 function ContactForm() {
@@ -759,10 +767,7 @@ function ContactForm() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
-    const payload = {
-      "form-name": "contact",
-      ...form,
-    };
+    const payload = { "form-name": "contact", ...form };
     try {
       await fetch("/", {
         method: "POST",
@@ -835,7 +840,7 @@ function ContactForm() {
   );
 }
 
-/* ---------------- Brief (required + file upload) ---------------- */
+/* ---------------- Brief (with required fields + file upload) ---------------- */
 
 function Brief({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
@@ -860,7 +865,7 @@ function Brief({ slug }) {
     competitors: "",
     notes: "",
   });
-  const [files, setFiles] = useState([]); // uploaded asset files
+  const [files, setFiles] = useState([]);
   const [errors, setErrors] = useState({});
 
   function validate() {
@@ -872,7 +877,7 @@ function Brief({ slug }) {
     if (!form.pages) e.pages = "Required";
     if (!form.goal) e.goal = "Required";
     if (!form.assetsNote && (!files || files.length === 0)) {
-      e.assetsNote = "Provide either a note or upload at least one asset file";
+      e.assetsNote = "Provide a note or upload at least one asset file";
     }
     return e;
   }
@@ -888,7 +893,6 @@ function Brief({ slug }) {
     fd.append("package", pkg.name);
     fd.append("rush", rush ? "Yes" : "No");
     fd.append("total", `$${total}`);
-
     Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
     if (files?.length) Array.from(files).forEach((f) => fd.append("assetsFiles", f));
 
@@ -924,17 +928,17 @@ function Brief({ slug }) {
             Optional rush delivery will be displayed in your total and can also be toggled on the payment page.
           </div>
 
-          {/* Required */}
+          {/* Basic info (REQUIRED) */}
           <FormField label="Company / brand" value={form.company} onChange={(v)=>setForm({...form, company:v})} error={errors.company}/>
           <FormField label="Contact name" value={form.contact} onChange={(v)=>setForm({...form, contact:v})} error={errors.contact}/>
           <FormField label="Email" type="email" value={form.email} onChange={(v)=>setForm({...form, email:v})} error={errors.email}/>
           <FormField label="Phone" value={form.phone} onChange={(v)=>setForm({...form, phone:v})} error={errors.phone}/>
 
-          {/* Required */}
+          {/* Project (REQUIRED) */}
           <FormField label="Goal of the site" textarea value={form.goal} onChange={(v)=>setForm({...form, goal:v})} error={errors.goal}/>
           <FormField label="Estimated pages" value={form.pages} onChange={(v)=>setForm({...form, pages:v})} error={errors.pages}/>
 
-          {/* Assets: note or files required */}
+          {/* Assets: either text OR files is REQUIRED */}
           <FormField
             label="Available assets (logo, photos, copy?) – brief notes"
             textarea
@@ -951,7 +955,7 @@ function Brief({ slug }) {
               onChange={(e)=>setFiles(e.target.files)}
               className="w-full border border-[var(--clr-subtle)] rounded-lg p-3 bg-white"
             />
-            <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. No previews; we’ll receive them attached.</div>
+            <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. We’ll receive them attached.</div>
           </div>
 
           {/* Optional */}
@@ -1007,7 +1011,7 @@ function FormField({ label, value, onChange, textarea, type = "text", error }) {
   );
 }
 
-/* ---------------- Payment (Embedded Checkout) ---------------- */
+/* ---------------- Stripe Payment (Embedded Checkout) ---------------- */
 
 function Pay({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
@@ -1027,18 +1031,12 @@ function Pay({ slug }) {
         const res = await fetch("/.netlify/functions/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug,
-            rush,
-            origin: window.location.origin,
-          }),
+          body: JSON.stringify({ slug, rush, origin: window.location.origin }),
         });
-
         if (!res.ok) {
           const text = await res.text();
           throw new Error(text || "Failed to create session");
         }
-
         const { clientSecret } = await res.json();
         setClientSecret(clientSecret);
         setError("");
@@ -1058,13 +1056,11 @@ function Pay({ slug }) {
     let cleanup = () => {};
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
-
       const { loadStripe } = await import("@stripe/stripe-js");
       const stripe = await loadStripe(
         import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
       );
       if (!stripe) { setError("Stripe not available."); return; }
-
       const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
       checkout.mount(containerRef.current);
       cleanup = () => checkout.destroy();
@@ -1086,30 +1082,20 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={rush}
-                onChange={(e) => setRush(e.target.checked)}
-              />
+              <input type="checkbox" checked={rush} onChange={(e) => setRush(e.target.checked)} />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
             </label>
             <div className="ts-h4 font-semibold">Total: ${total}</div>
           </div>
 
           <div className="mt-6">
-            {error && (
-              <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">
-                {error}
-              </div>
-            )}
+            {error && <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">{error}</div>}
             <div ref={containerRef} id="checkout" className="w-full" />
           </div>
 
-          <div className="mt-4 ts-h6 text-slate-500">
-            Secure payment powered by Stripe.
-          </div>
+          <div className="mt-4 ts-h6 text-slate-500">Secure payment powered by Stripe.</div>
         </div>
       </div>
     </section>
@@ -1149,14 +1135,12 @@ function ThankYou() {
         {summary && (
           <div className="card p-6 mt-6">
             <div className="ts-h5 font-semibold">Purchase summary</div>
-            <div className="ts-h6 text-slate-600 mt-2 stack-tight">
+            <div className="ts-h6 text-slate-600 mt-2">
               <div><b>Status:</b> {summary.payment_status}</div>
               <div><b>Transaction ID:</b> {summary.payment_intent_id}</div>
               <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
               <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
-              <div><b>Total:</b> {summary.amount_total
-                ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
-                : "—"}</div>
+              <div><b>Total:</b> {summary.amount_total ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}` : "—"}</div>
             </div>
             <div className="ts-h6 text-slate-600 mt-3">
               Forgot to include something in your brief? Send a message via the <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a> and include your Transaction ID above. We’ll attach your note to the project.
@@ -1275,7 +1259,7 @@ function TechTerms() {
   );
 }
 
-/* ---------------- Netlify: Hidden forms so they are detected at build ---------------- */
+/* ---------------- Netlify: Hidden forms (detected at build) ---------------- */
 
 function NetlifyHiddenForms() {
   return (
@@ -1296,5 +1280,18 @@ function NetlifyHiddenForms() {
         <input name="first" />
       </form>
     </div>
+  );
+}
+
+/* ---------------- Not Found ---------------- */
+
+function NotFound() {
+  return (
+    <section className="py-16">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h2 font-semibold mb-2">Page not found</h1>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2">Go home</a>
+      </div>
+    </section>
   );
 }
