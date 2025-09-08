@@ -18,12 +18,6 @@ import {
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
  * Routes: /#/, /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms, /#/projects
- * - Home “Showcase projects” now uses your real images (4 rotating), smaller on desktop.
- * - New Projects page (grid with 6 items) — showcasey, not salesy.
- * - Netlify forms (contact + 3 briefs). File upload supported. Brief validates required fields.
- * - Payment via Stripe Embedded Checkout (Netlify Functions).
- * - Thank-you pulls session status + summary from a function.
- * - Design rules: major-third type scale baseline 16px, 12/4 grid, 8pt spacing, 60/30/10 palette, high contrast.
  */
 
 function cx(...classes) {
@@ -32,9 +26,9 @@ function cx(...classes) {
 
 // Theme
 const theme = {
-  neutral: "#F5F7FB", // 60% background
-  secondary: "#0F172A", // 30% headings/cards
-  accent: "#3B82F6", // 10% CTAs
+  neutral: "#F5F7FB",
+  secondary: "#0F172A",
+  accent: "#3B82F6",
   accentHover: "#1D4ED8",
   subtle: "#E5E7EB",
 };
@@ -50,8 +44,7 @@ const typeScale = {
   h1: 61.0352,
 };
 
-/* ------------- PROJECT MEDIA ------------- */
-/* Public images you uploaded (served from /public/showcase/*) */
+/* ------------ PUBLIC images (placed in /public/showcase) ------------ */
 const IMGS = {
   law: "/showcase/harbor-sage-law.png",
   gymHero: "/showcase/vigor-lab-hero.png",
@@ -61,7 +54,7 @@ const IMGS = {
   ai: "/showcase/sentienceworks-ai.png",
 };
 
-/* ------------- HOME SHOWCASE (4 items) ------------- */
+/* ------------ HOME showcase (4 rotating) ------------ */
 const showcase = [
   {
     title: "Harbor & Sage Law",
@@ -89,7 +82,7 @@ const showcase = [
   },
 ];
 
-/* ------------- PROJECTS PAGE (6 items) ------------- */
+/* ------------ Projects page (6 grid items) ------------ */
 const allProjects = [
   {
     title: "Harbor & Sage Law",
@@ -138,76 +131,6 @@ const allProjects = [
     alt: "AI integration services website screenshot",
     summary:
       "Story-driven presentation of AI services with proof points and scannable modules.",
-  },
-];
-
-// Packages with timelines + rush options
-const packages = [
-  {
-    slug: "starter",
-    name: "Starter",
-    price: 900,
-    displayPrice: "$900",
-    days: 4,
-    rushDays: 2,
-    rushFee: 200,
-    blurb: "2–3 pages, custom design. Mobile + desktop. Modern animations.",
-    perfectFor: "Cafés, barbers, freelancers",
-    features: [
-      "2–3 custom pages",
-      "Responsive + performance pass",
-      "Simple lead/contact form",
-      "Launch in days, not weeks",
-    ],
-    cta: "Start Starter",
-    timelineNote:
-      "Typical timeline: 4 days (rush 2 days for an additional $200).",
-  },
-  {
-    slug: "growth",
-    name: "Growth",
-    price: 2300,
-    displayPrice: "$2,300",
-    days: 8,
-    rushDays: 6,
-    rushFee: 400,
-    blurb:
-      "5–7 pages, custom design + SEO. Contact/booking, Maps, integrations, content guidance.",
-    perfectFor: "Dentists, gyms, restaurants, small firms",
-    features: [
-      "5–7 custom pages",
-      "On-page SEO + schema",
-      "Contact / booking form + Maps",
-      "3rd-party integrations",
-      "Content guidance (no full copy)",
-    ],
-    highlight: true,
-    cta: "Grow with Growth",
-    timelineNote:
-      "Typical timeline: 8 days (rush 6 days for an additional $400).",
-  },
-  {
-    slug: "scale",
-    name: "Scale",
-    price: 7000,
-    displayPrice: "$7,000",
-    days: 14,
-    rushDays: 10,
-    rushFee: 800,
-    blurb:
-      "10+ pages, full custom design. Strategy (brand/positioning/funnel), advanced SEO + analytics, booking/e-commerce/CRM, copy support.",
-    perfectFor: "Law firms, real estate, healthcare, e-commerce brands",
-    features: [
-      "10+ pages, full custom",
-      "Strategy session + funnel mapping",
-      "Advanced SEO + analytics",
-      "Booking systems / e-commerce",
-      "CRM integrations",
-      "Copywriting support",
-    ],
-    cta: "Scale with Scale",
-    timelineNote:
-      "Typical timeline: 14 days (rush 10 days for an additional $800).",
   },
 ];
 
@@ -272,6 +195,8 @@ export default function App() {
       <style>{`
         html, body, #root { height: 100%; overflow-x: hidden; }
         :root { --container: 1280px; }
+
+        /* Base type (desktop/tablet) */
         .ts-p { font-size: var(--ts-p); letter-spacing: 0; line-height: 1.5; }
         .ts-h6 { font-size: var(--ts-h6); letter-spacing: -0.005em; line-height: 1.3; }
         .ts-h5 { font-size: var(--ts-h5); letter-spacing: -0.01em; line-height: 1.3; }
@@ -279,22 +204,25 @@ export default function App() {
         .ts-h3 { font-size: var(--ts-h3); letter-spacing: -0.015em; line-height: 1.2; }
         .ts-h2 { font-size: var(--ts-h2); letter-spacing: -0.018em; line-height: 1.1; }
         .ts-h1 { font-size: var(--ts-h1); letter-spacing: -0.02em; line-height: 1.0; }
-        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }  /* 16px gap (8-pt grid) */
+
+        .grid-12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (min-width: 1024px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 2rem; } }
+
         .card { background: white; border: 1px solid var(--clr-subtle); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
         .btn-accent { background: var(--clr-accent); color: white; }
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* Mobile compaction: 2 steps smaller for headings (keeps p=16 baseline) */
+        /* MOBILE: shrink ALL type roughly one scale step (your "2 fonts smaller") */
         @media (max-width: 480px){
           :root {
-            --ts-h6: 18px; /* smaller */
-            --ts-h5: 22px;
-            --ts-h4: 28px;
-            --ts-h3: 34px;
-            --ts-h2: 40px;
-            --ts-h1: 48px; /* key: hero headline smaller */
+            --ts-p: 14px;          /* down from 16 */
+            --ts-h6: 16px;         /* down from 20 */
+            --ts-h5: 20px;         /* down from 25 */
+            --ts-h4: 25px;         /* down from 31.25 */
+            --ts-h3: 31.25px;      /* down from 39.06 */
+            --ts-h2: 39.0625px;    /* down from 48.83 */
+            --ts-h1: 48.8281px;    /* down from 61.03 (this is the hero fix) */
           }
           .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
           .tight-block { margin-bottom: 16px !important; }
@@ -351,7 +279,6 @@ function Header() {
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
       <div className="mx-auto max-w-[var(--container)] px-6 py-2 flex items-center justify-between">
-        {/* Logo acts as home button */}
         <a href="#/" className="ts-h6 font-semibold" onClick={() => setOpen(false)}>CITEKS</a>
         <div className="hidden md:flex items-center gap-6 justify-end flex-1">
           <a href="#/" className="ts-h6 hover:opacity-80">Home</a>
@@ -440,8 +367,8 @@ function Home() {
             {/* Showcase Card (rotator) */}
             <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6, delay:.1}} className="lg:col-span-5 col-span-4">
               <div className="card p-0 relative overflow-hidden">
-                {/* Smaller frame on desktop */}
-                <div className="relative h-[240px] sm:h-[280px] md:h-[420px]">
+                {/* Slightly smaller than full page on desktop, not tiny */}
+                <div className="relative h-[260px] sm:h-[320px] md:h-[520px] lg:h-[560px]">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={index}
@@ -452,10 +379,19 @@ function Home() {
                       className="absolute inset-0"
                     >
                       <img
-                        src={showcase[index].src}
+                        src={showcase[index].src + "?v=1"}
                         alt={showcase[index].alt}
                         className="w-full h-full object-cover"
                         loading="eager"
+                        onError={(e) => {
+                          console.warn("Image failed to load:", e.currentTarget.src);
+                          e.currentTarget.style.display = "none";
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.style.background =
+                              "linear-gradient(135deg,#e5e7eb,#cbd5e1)";
+                          }
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-tr from-black/25 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
@@ -595,7 +531,7 @@ function Home() {
   );
 }
 
-/* -------- Projects page (showcasey, light copy) -------- */
+/* -------- Projects page -------- */
 
 function Projects() {
   return (
@@ -613,7 +549,18 @@ function Projects() {
           {allProjects.map((p) => (
             <div key={p.title} className="card overflow-hidden">
               <div className="relative h-[220px] sm:h-[280px] md:h-[360px]">
-                <img src={p.src} alt={p.alt} className="w-full h-full object-cover" loading="lazy" />
+                <img
+                  src={p.src + "?v=1"}
+                  alt={p.alt}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    console.warn("Image failed to load:", e.currentTarget.src);
+                    e.currentTarget.style.display = "none";
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) parent.style.background = "linear-gradient(135deg,#e5e7eb,#cbd5e1)";
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
                   <div className="ts-h5 font-semibold">{p.title}</div>
@@ -798,7 +745,7 @@ function ContactForm() {
   );
 }
 
-/* ---------------- Brief (with required fields + file upload) ---------------- */
+/* ---------------- Brief (required + file upload) ---------------- */
 
 function Brief({ slug }) {
   const pkg = packages.find((p) => p.slug === slug);
@@ -814,7 +761,7 @@ function Brief({ slug }) {
     phone: "",
     pages: "",
     goal: "",
-    assetsNote: "",          // text notes about assets (if any)
+    assetsNote: "",
     seo: "",
     integrations: "",
     ecommerce: "",
@@ -828,14 +775,12 @@ function Brief({ slug }) {
 
   function validate() {
     const e = {};
-    // REQUIRED (everything except: notes, competitors, references, crm, ecommerce, seo, integrations)
     if (!form.company) e.company = "Required";
     if (!form.contact) e.contact = "Required";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Enter a valid email";
     if (!form.phone) e.phone = "Required";
     if (!form.pages) e.pages = "Required";
     if (!form.goal) e.goal = "Required";
-    // Assets requirement: must provide either a note OR at least one file
     if (!form.assetsNote && (!files || files.length === 0)) {
       e.assetsNote = "Provide either a note or upload at least one asset file";
     }
@@ -848,7 +793,6 @@ function Brief({ slug }) {
     setErrors(e1);
     if (Object.keys(e1).length) return;
 
-    // Build multipart form for Netlify (to capture files)
     const fd = new FormData();
     fd.append("form-name", `brief-${pkg.slug}`);
     fd.append("package", pkg.name);
@@ -856,11 +800,7 @@ function Brief({ slug }) {
     fd.append("total", `$${total}`);
 
     Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
-
-    // append files under same name (Netlify supports multi files)
-    if (files?.length) {
-      Array.from(files).forEach((f) => fd.append("assetsFiles", f));
-    }
+    if (files?.length) Array.from(files).forEach((f) => fd.append("assetsFiles", f));
 
     try {
       await fetch("/", { method: "POST", body: fd });
@@ -894,17 +834,17 @@ function Brief({ slug }) {
             Optional rush delivery will be displayed in your total and can also be toggled on the payment page.
           </div>
 
-          {/* Basic info (REQUIRED) */}
+          {/* Required */}
           <FormField label="Company / brand" value={form.company} onChange={(v)=>setForm({...form, company:v})} error={errors.company}/>
           <FormField label="Contact name" value={form.contact} onChange={(v)=>setForm({...form, contact:v})} error={errors.contact}/>
           <FormField label="Email" type="email" value={form.email} onChange={(v)=>setForm({...form, email:v})} error={errors.email}/>
           <FormField label="Phone" value={form.phone} onChange={(v)=>setForm({...form, phone:v})} error={errors.phone}/>
 
-          {/* Project (REQUIRED) */}
+          {/* Required */}
           <FormField label="Goal of the site" textarea value={form.goal} onChange={(v)=>setForm({...form, goal:v})} error={errors.goal}/>
           <FormField label="Estimated pages" value={form.pages} onChange={(v)=>setForm({...form, pages:v})} error={errors.pages}/>
 
-          {/* Assets: either text OR files is REQUIRED */}
+          {/* Assets: note or files required */}
           <FormField
             label="Available assets (logo, photos, copy?) – brief notes"
             textarea
@@ -924,7 +864,7 @@ function Brief({ slug }) {
             <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. No previews; we’ll receive them attached.</div>
           </div>
 
-          {/* Optional fields */}
+          {/* Optional */}
           <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
           <FormField label="Integrations (maps, booking, payments)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
           <FormField label="E-commerce (if needed)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
@@ -1056,7 +996,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1068,7 +1008,6 @@ function Pay({ slug }) {
             <div className="ts-h4 font-semibold">Total: ${total}</div>
           </div>
 
-          {/* Embedded Checkout container */}
           <div className="mt-6">
             {error && (
               <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">
@@ -1142,7 +1081,7 @@ function ThankYou() {
   );
 }
 
-/* ---------------- Footer (expanded) ---------------- */
+/* ---------------- Footer ---------------- */
 
 function Footer() {
   return (
