@@ -44,7 +44,7 @@ const typeScale = {
   h1: 61.0352,
 };
 
-/* ------------ PACKAGES (restored) ------------ */
+/* ------------ PACKAGES ------------ */
 const packages = [
   {
     slug: "starter",
@@ -114,93 +114,113 @@ const packages = [
   },
 ];
 
-/* ------------ PUBLIC images (placed in /public/showcase) ------------ */
+/* ------------ Asset helper (fixes images not loading) ------------ */
+/** Returns a public URL that works locally and on Netlify, even with a non-root base. */
+const asset = (path) => {
+  const base = (import.meta && import.meta.env && import.meta.env.BASE_URL) || "/";
+  return base.replace(/\/+$/,"/") + String(path).replace(/^\/+/,"");
+};
+
+/* ------------ PUBLIC images (place these PNGs in /public/showcase) ------------ */
+/**
+ * Make sure the files exist in your repo at:
+ * public/showcase/harbor-sage-law.png
+ * public/showcase/vigor-lab-hero.png
+ * public/showcase/vigor-lab-programs.png
+ * public/showcase/odd-fellow-barber.png
+ * public/showcase/meridian-museum.png
+ * public/showcase/sentienceworks-ai.png
+ */
 const IMGS = {
-  law: "/showcase/harbor-sage-law.png",
-  gymHero: "/showcase/vigor-lab-hero.png",
-  gymPrograms: "/showcase/vigor-lab-programs.png",
-  barber: "/showcase/odd-fellow-barber.png",
-  museum: "/showcase/meridian-museum.png",
-  ai: "/showcase/sentienceworks-ai.png",
+  law: asset("showcase/harbor-sage-law.png"),
+  gymHero: asset("showcase/vigor-lab-hero.png"),
+  gymPrograms: asset("showcase/vigor-lab-programs.png"),
+  barber: asset("showcase/odd-fellow-barber.png"),
+  museum: asset("showcase/meridian-museum.png"),
+  ai: asset("showcase/sentienceworks-ai.png"),
 };
 
 /* ------------ HOME showcase (4 rotating) ------------ */
 const showcase = [
   {
     title: "Harbor & Sage Law",
-    caption: "Trust-forward counsel website for a boutique law firm.",
+    caption:
+      "Scale package for a business law firm. Editorial layout, transparent services, SEO-ready — every page leads to booking a consultation.",
     src: IMGS.law,
     alt: "Homepage of Harbor & Sage Law website",
   },
   {
-    title: "Vigor Lab – Gym",
-    caption: "High-impact hero with clear trial CTA and value props.",
+    title: "Vigor Lab — Gym",
+    caption:
+      "Starter package. Bold, energetic hero with modern shapes and strong CTAs. Built fast, responsive, and performance-optimized.",
     src: IMGS.gymHero,
     alt: "Hero section of Vigor Lab gym homepage",
   },
   {
     title: "Odd Fellow Barber",
-    caption: "Modern barber site with pricing and quick booking flow.",
+    caption:
+      "Starter package. Editorial feel with warm browns and stylish type. Niche design details, clear pricing, easy booking.",
     src: IMGS.barber,
     alt: "Barber studio website screenshot",
   },
   {
     title: "Meridian Museum",
-    caption: "A showcase-style site for exhibits and visiting info.",
+    caption:
+      "Custom concept. Showcase-led, atmospheric visuals and clear visiting info. Less sell, more story.",
     src: IMGS.museum,
     alt: "Museum showcase website screenshot",
   },
 ];
 
-/* ------------ Projects page (6 grid items) ------------ */
+/* ------------ Projects page (6 items; gym shots grouped) ------------ */
 const allProjects = [
   {
     title: "Harbor & Sage Law",
-    role: "Web design • Funnel • Copy support",
+    role: "Scale package • Web design • Funnel • Copy support",
     src: IMGS.law,
     alt: "Homepage of Harbor & Sage Law website",
     summary:
-      "Clarity-first structure with social proof and transparent services. Focus on booking a consultation.",
+      "Editorial structure, trust-first messaging, SEO-ready practice pages, and a clear route to “Book a consultation.”",
   },
   {
     title: "Vigor Lab — Hero",
-    role: "Web design • Motion • Conversion copy",
+    role: "Starter package • Web design • Motion • Conversion copy",
     src: IMGS.gymHero,
     alt: "Hero section of Vigor Lab gym homepage",
     summary:
-      "Headline + subline with quick-entry CTAs. Designed to push trials and class schedule exploration.",
+      "High-impact hero with sharp value props, strong CTA, and visual language that feels energetic and modern.",
   },
   {
     title: "Vigor Lab — Programs",
-    role: "Web design • IA • Visual hierarchy",
+    role: "Starter package • IA • Visual hierarchy",
     src: IMGS.gymPrograms,
     alt: "Programs section for Vigor Lab gym website",
     summary:
-      "Simple program cards with benefits and an obvious next step. Reduces friction to sign up.",
+      "Scannable program cards with benefits and a clear next step. Pairs with the hero to drive sign-ups.",
   },
   {
     title: "Odd Fellow Barber",
-    role: "Web design • Price anchors • Booking",
+    role: "Starter package • Price anchors • Booking",
     src: IMGS.barber,
     alt: "Barber studio website screenshot",
     summary:
-      "Premium look, concise pricing, and streamlined booking — built for quick decisions.",
-  },
-  {
-    title: "Meridian Museum",
-    role: "Web design • Content structure • Accessibility",
-    src: IMGS.museum,
-    alt: "Museum showcase website screenshot",
-    summary:
-      "Showcase-led layout with visiting info surfaced early. Clear paths for exhibits and tickets.",
+      "A curated, editorial feel that matches the craft. Simple pricing and streamlined booking for quick decisions.",
   },
   {
     title: "SentienceWorks AI",
-    role: "Web design • Productization • Narrative",
+    role: "Growth package • Web design • Narrative",
     src: IMGS.ai,
     alt: "AI integration services website screenshot",
     summary:
-      "Story-driven presentation of AI services with proof points and scannable modules.",
+      "Futuristic palette, kinetic accents, and clear productization of services — conversion without losing depth.",
+  },
+  {
+    title: "Meridian Museum",
+    role: "Custom concept • Content structure • Accessibility",
+    src: IMGS.museum,
+    alt: "Museum showcase website screenshot",
+    summary:
+      "Atmosphere forward. Clean layouts with ticket-style CTAs, better exhibit discovery, and clear visiting info.",
   },
 ];
 
@@ -283,16 +303,17 @@ export default function App() {
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
-        /* MOBILE: shrink ALL type roughly one scale step (your "2 fonts smaller") */
+        /* MOBILE: drop two Major-Third steps across the board (readable p) */
         @media (max-width: 480px){
           :root {
-            --ts-p: 14px;          /* down from 16 */
-            --ts-h6: 16px;         /* down from 20 */
-            --ts-h5: 20px;         /* down from 25 */
-            --ts-h4: 25px;         /* down from 31.25 */
-            --ts-h3: 31.25px;      /* down from 39.06 */
-            --ts-h2: 39.0625px;    /* down from 48.83 */
-            --ts-h1: 48.8281px;    /* down from 61.03 (hero fix) */
+            /* Two steps down mapping: h1→h3, h2→h4, h3→h5, h4→h6, h5→p; keep p smaller but legible */
+            --ts-p: 14px;          /* 16 → 14 (not extreme) */
+            --ts-h6: 16px;         /* 20 → 16 */
+            --ts-h5: 20px;         /* 25 → 20 */
+            --ts-h4: 25px;         /* 31.25 → 25 */
+            --ts-h3: 31.25px;      /* 39.06 → 31.25 */
+            --ts-h2: 39.0625px;    /* 48.83 → 39.06 */
+            --ts-h1: 39.0625px;    /* 61.03 → 39.06 (strict 2-step drop) */
           }
           .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
           .tight-block { margin-bottom: 16px !important; }
@@ -437,8 +458,8 @@ function Home() {
             {/* Showcase Card (rotator) */}
             <motion.div initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:.6, delay:.1}} className="lg:col-span-5 col-span-4">
               <div className="card p-0 relative overflow-hidden">
-                {/* Slightly smaller than full page on desktop, not tiny */}
-                <div className="relative h-[260px] sm:h-[320px] md:h-[520px] lg:h-[560px]">
+                {/* Near-original size on desktop; smaller on mobile */}
+                <div className="relative h-[300px] sm:h-[380px] md:h-[560px] lg:h-[640px]">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={index}
@@ -449,7 +470,7 @@ function Home() {
                       className="absolute inset-0"
                     >
                       <img
-                        src={showcase[index].src + "?v=1"}
+                        src={showcase[index].src}
                         alt={showcase[index].alt}
                         className="w-full h-full object-cover"
                         loading="eager"
@@ -610,8 +631,7 @@ function Projects() {
         <div className="mb-6">
           <h1 className="ts-h2 font-semibold">Selected projects</h1>
           <p className="ts-h6 text-slate-600 max-w-2xl mt-2">
-            A few builds we like — less talk, more results. Clear structure, fast performance,
-            and design that guides users to action without shouting.
+            Less talk, more results. Clean structure, fast performance, and design that guides action without shouting.
           </p>
         </div>
 
@@ -620,7 +640,7 @@ function Projects() {
             <div key={p.title} className="card overflow-hidden">
               <div className="relative h-[220px] sm:h-[280px] md:h-[360px]">
                 <img
-                  src={p.src + "?v=1"}
+                  src={p.src}
                   alt={p.alt}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -1066,7 +1086,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input
                 type="checkbox"
