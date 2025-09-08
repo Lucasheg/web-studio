@@ -18,12 +18,11 @@ import {
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
  * Routes: /#/, /#/why-us, /#/projects, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
- * - Home hero + Showcase section (rectangle 2:1, big but not oversized; object-contain to avoid cropping).
- * - Projects page: smaller rectangle images (2:1), varied desktop layout; mobile much smaller + gym has connecting text between images.
- * - Mobile type scale: stays two steps smaller (as you liked).
- * - Netlify forms (contact + briefs, file upload).
- * - Stripe Embedded Checkout (Netlify Functions).
- * - Thank-you: session summary.
+ * Changes in this version (per your last request):
+ * - Home showcase ratio on desktop forced to true 2:1 (no 3:1).
+ * - Barber photo: robust fallbacks so it displays if the filename differs.
+ * - Vigor Lab: set to Growth (not local gym) everywhere.
+ * - Projects page: separator line between project groups (proximity cue), layout unchanged.
  */
 
 function cx(...classes) {
@@ -50,8 +49,20 @@ const typeScale = {
   h1: 61.0352,
 };
 
-// Showcase items (home slider + projects page)
-// Make sure the files exist at /public/showcase/...
+/* ---------------- Image helpers ---------------- */
+
+function handleImgError(e, fallbacks = []) {
+  const el = e.currentTarget;
+  const idx = parseInt(el.dataset.fbIdx || "0", 10);
+  if (idx < fallbacks.length) {
+    el.src = fallbacks[idx];
+    el.dataset.fbIdx = String(idx + 1);
+  }
+}
+
+/* ---------------- Showcase data ---------------- */
+/* File paths must exist at public/showcase/...  */
+
 const showcaseSlides = [
   {
     key: "harbor-sage",
@@ -62,9 +73,9 @@ const showcaseSlides = [
   },
   {
     key: "vigor-lab-hero",
-    title: "Vigor Lab (Gym) — Starter",
+    title: "Vigor Lab — Growth",
     caption:
-      "Bold, energetic, strong CTAs. Built fast and performance-optimized.",
+      "Bold, energetic hero with strong CTAs. Built fast and performance-optimized.",
     src: "/showcase/vigor-lab-hero.png",
   },
   {
@@ -73,6 +84,8 @@ const showcaseSlides = [
     caption:
       "Rich brown tones, stylish type, and details that reflect the craft.",
     src: "/showcase/urban-barber.png",
+    // Fallbacks in case filename differs on disk
+    fallbacks: ["/showcase/barber.png", "/showcase/showcase-barber.png"],
   },
   {
     key: "sentienceworks",
@@ -91,7 +104,7 @@ const allProjects = {
     src: "/showcase/harbor-sage-law.png",
   },
   gym: {
-    title: "Vigor Lab — Local Gym (Starter)",
+    title: "Vigor Lab — Growth",
     blurb:
       "Bold, energetic, and action-led. The two sections work together — a high-energy hero and a clear programs matrix — optimized for fast decisions and quick sign-ups.",
     a: "/showcase/vigor-lab-hero.png",
@@ -104,6 +117,7 @@ const allProjects = {
     blurb:
       "A personal, editorial take with warm tones and craft details. It feels curated, not templated — with clean structure and a clear booking flow.",
     src: "/showcase/urban-barber.png",
+    fallbacks: ["/showcase/barber.png", "/showcase/showcase-barber.png"],
   },
   ai: {
     title: "SentienceWorks — AI Services (Growth)",
@@ -119,7 +133,7 @@ const allProjects = {
   },
 };
 
-// Packages
+// Packages (unchanged)
 const packages = [
   {
     slug: "starter",
@@ -275,8 +289,8 @@ export default function App() {
         .img-frame { position: relative; width: 100%; }
         .img-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; }
 
-        /* Home Showcase sizing: big but not oversized */
-        .showcase-frame { max-height: min(560px, 62vh); }
+        /* Home Showcase sizing: TRUE 2:1 on desktop, constrained only on tablet/mobile */
+        .showcase-frame { /* desktop */ max-height: none; }
         @media (max-width: 1024px) {
           .showcase-frame { max-height: 420px; }
         }
@@ -293,6 +307,10 @@ export default function App() {
           .project-frame { max-height: 200px; }
         }
 
+        /* Section separator line for Projects groups (proximity cue) */
+        .proj-sep { border-top: 1px solid var(--clr-subtle); margin: 32px 0; } /* 8-pt grid: 32px */
+        @media (max-width: 480px) { .proj-sep { margin: 24px 0; } }
+
         /* ---------- TABLET TUNING ---------- */
         @media (min-width: 481px) and (max-width: 1024px) {
           :root {
@@ -305,7 +323,7 @@ export default function App() {
           }
         }
 
-        /* ---------- MOBILE: two steps smaller (as requested and confirmed) ---------- */
+        /* ---------- MOBILE: two steps smaller (kept as you liked) ---------- */
         @media (max-width: 480px) {
           :root {
             --ts-p: 16px;
@@ -419,7 +437,7 @@ function Home() {
   );
 }
 
-/* Hero */
+/* Hero (unchanged content and mobile sizes you liked) */
 
 function Hero() {
   return (
@@ -456,7 +474,7 @@ function Hero() {
   );
 }
 
-/* Home Showcase – rectangle 2:1, big but not scroll-dominating */
+/* Home Showcase – rectangle 2:1 (desktop exact), tablet/mobile constrained by max-height */
 
 function ShowcaseHome() {
   const [index, setIndex] = useState(0);
@@ -492,11 +510,12 @@ function ShowcaseHome() {
                 exit={{ opacity: 0, scale: 1.005 }}
                 transition={{ duration: 0.45 }}
                 className="img-el"
+                onError={(e)=>handleImgError(e, slide.fallbacks)}
                 loading="eager"
               />
             </AnimatePresence>
 
-            {/* Subtle bottom bar for caption (sits inside the frame) */}
+            {/* Bottom caption */}
             <div className="absolute left-0 right-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/30 to-transparent text-white">
               <div className="ts-h6 font-semibold">{slide.title}</div>
               <div className="ts-h6 opacity-90">{slide.caption}</div>
@@ -629,7 +648,11 @@ function ContactSection() {
   );
 }
 
-/* ---------------- Projects page (varied desktop layout, smaller rectangles) ---------------- */
+/* ---------------- Projects page ---------------- */
+
+function Separator() {
+  return <div className="proj-sep" />;
+}
 
 function Projects() {
   return (
@@ -637,7 +660,7 @@ function Projects() {
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h1 font-semibold mb-4">Projects</h1>
 
-        {/* Law — image left 7/12, text right 5/12 (desktop). Mobile stacks, smaller frame. */}
+        {/* Law */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
           <div className="lg:col-span-7">
             <Frame2x1 className="project-frame">
@@ -650,7 +673,9 @@ function Projects() {
           </div>
         </div>
 
-        {/* Gym — desktop: image / text / image; mobile: image, connective text, image (all small) */}
+        <Separator />
+
+        {/* Vigor Lab (Growth) */}
         <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6 items-start mb-12">
           <div className="lg:col-span-5">
             <Frame2x1 className="project-frame">
@@ -678,7 +703,9 @@ function Projects() {
           <p className="ts-h6 text-slate-600 mt-1">{allProjects.gym.blurb}</p>
         </div>
 
-        {/* Barber — text left 5/12, image right 7/12 */}
+        <Separator />
+
+        {/* Barber */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
           <div className="lg:col-span-5 order-2 lg:order-1">
             <h3 className="ts-h4 font-semibold">{allProjects.barber.title}</h3>
@@ -686,12 +713,20 @@ function Projects() {
           </div>
           <div className="lg:col-span-7 order-1 lg:order-2">
             <Frame2x1 className="project-frame">
-              <img src={allProjects.barber.src} alt="Urban Barber — Starter" className="img-el" loading="lazy" />
+              <img
+                src={allProjects.barber.src}
+                alt="Urban Barber — Starter"
+                className="img-el"
+                onError={(e)=>handleImgError(e, allProjects.barber.fallbacks)}
+                loading="lazy"
+              />
             </Frame2x1>
           </div>
         </div>
 
-        {/* AI — centered, narrower (8/12) */}
+        <Separator />
+
+        {/* AI */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
           <div className="lg:col-span-2" />
           <div className="lg:col-span-8">
@@ -704,7 +739,9 @@ function Projects() {
           <div className="lg:col-span-2" />
         </div>
 
-        {/* Museum — slightly wider (10/12) */}
+        <Separator />
+
+        {/* Museum */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-1" />
           <div className="lg:col-span-10">
@@ -1113,7 +1150,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input type="checkbox" checked={rush} onChange={(e) => setRush(e.target.checked)} />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
