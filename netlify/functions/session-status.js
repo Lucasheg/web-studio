@@ -11,8 +11,20 @@ export async function handler(event) {
     }
 
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["payment_intent", "line_items"],
+      expand: ["payment_intent.latest_charge", "line_items.data.price"],
     });
+
+    // Fallback totals
+    let lineItemsTotal = null;
+    if (session?.line_items?.data?.length) {
+      lineItemsTotal = session.line_items.data.reduce((sum, li) => {
+        const unit = li.price?.unit_amount || 0;
+        const qty = li.quantity || 1;
+        return sum + unit * qty;
+      }, 0);
+    }
+
+    const chargeId = session?.payment_intent?.latest_charge?.id || null;
 
     return {
       statusCode: 200,
@@ -23,7 +35,9 @@ export async function handler(event) {
         payment_status: session.payment_status,
         payment_intent_id: session.payment_intent?.id || null,
         payment_intent_status: session.payment_intent?.status || null,
-        amount_total: session.amount_total,
+        charge_id: chargeId,
+        amount_total: session.amount_total ?? null,
+        line_items_total: lineItemsTotal,
         currency: session.currency,
         metadata: session.metadata || {},
       }),
