@@ -7,6 +7,58 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Netlify FORM DETECTORS (static + hidden). Critical: must be in built HTML -->
+    <div style="display:none">
+      <!-- Contact -->
+      <form name="contact" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="contact" />
+        <input name="first" />
+        <input name="last" />
+        <input name="email" />
+        <input name="project" />
+        <input name="budget" />
+        <textarea name="message"></textarea>
+      </form>
+
+      <!-- Brief: Starter -->
+      <form name="brief-starter" data-netlify="true" enctype="multipart/form-data">
+        <input type="hidden" name="form-name" value="brief-starter" />
+        <input name="company" />
+        <input name="contact" />
+        <input name="email" />
+        <input name="phone" />
+        <input name="pages" />
+        <textarea name="goal"></textarea>
+        <!-- at least one file input so Netlify provisions file handling -->
+        <input name="assetsFiles" type="file" />
+      </form>
+
+      <!-- Brief: Growth -->
+      <form name="brief-growth" data-netlify="true" enctype="multipart/form-data">
+        <input type="hidden" name="form-name" value="brief-growth" />
+        <input name="company" />
+        <input name="contact" />
+        <input name="email" />
+        <input name="phone" />
+        <input name="pages" />
+        <textarea name="goal"></textarea>
+        <input name="assetsFiles" type="file" />
+      </form>
+
+      <!-- Brief: Scale -->
+      <form name="brief-scale" data-netlify="true" enctype="multipart/form-data">
+        <input type="hidden" name="form-name" value="brief-scale" />
+        <input name="company" />
+        <input name="contact" />
+        <input name="email" />
+        <input name="phone" />
+        <input name="pages" />
+        <textarea name="goal"></textarea>
+        <input name="assetsFiles" type="file" />
+      </form>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
