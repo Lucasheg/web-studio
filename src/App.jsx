@@ -17,7 +17,7 @@ import {
 
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
- * Routes: /#/, /#/why-us, /#/projects, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
+ * Routes: /#/, /#/why-us, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms, /#/projects
  */
 
 function cx(...classes) {
@@ -43,6 +43,76 @@ const typeScale = {
   h2: 48.8281,
   h1: 61.0352,
 };
+
+/* ------------ PACKAGES (restored) ------------ */
+const packages = [
+  {
+    slug: "starter",
+    name: "Starter",
+    price: 900,
+    displayPrice: "$900",
+    days: 4,
+    rushDays: 2,
+    rushFee: 200,
+    blurb: "2–3 pages, custom design. Mobile + desktop. Modern animations.",
+    perfectFor: "Cafés, barbers, freelancers",
+    features: [
+      "2–3 custom pages",
+      "Responsive + performance pass",
+      "Simple lead/contact form",
+      "Launch in days, not weeks",
+    ],
+    cta: "Start Starter",
+    timelineNote:
+      "Typical timeline: 4 days (rush 2 days for an additional $200).",
+  },
+  {
+    slug: "growth",
+    name: "Growth",
+    price: 2300,
+    displayPrice: "$2,300",
+    days: 8,
+    rushDays: 6,
+    rushFee: 400,
+    blurb:
+      "5–7 pages, custom design + SEO. Contact/booking, Maps, integrations, content guidance.",
+    perfectFor: "Dentists, gyms, restaurants, small firms",
+    features: [
+      "5–7 custom pages",
+      "On-page SEO + schema",
+      "Contact / booking form + Maps",
+      "3rd-party integrations",
+      "Content guidance (no full copy)",
+    ],
+    highlight: true,
+    cta: "Grow with Growth",
+    timelineNote:
+      "Typical timeline: 8 days (rush 6 days for an additional $400).",
+  },
+  {
+    slug: "scale",
+    name: "Scale",
+    price: 7000,
+    displayPrice: "$7,000",
+    days: 14,
+    rushDays: 10,
+    rushFee: 800,
+    blurb:
+      "10+ pages, full custom design. Strategy (brand/positioning/funnel), advanced SEO + analytics, booking/e-commerce/CRM, copy support.",
+    perfectFor: "Law firms, real estate, healthcare, e-commerce brands",
+    features: [
+      "10+ pages, full custom",
+      "Strategy session + funnel mapping",
+      "Advanced SEO + analytics",
+      "Booking systems / e-commerce",
+      "CRM integrations",
+      "Copywriting support",
+    ],
+    cta: "Scale with Scale",
+    timelineNote:
+      "Typical timeline: 14 days (rush 10 days for an additional $800).",
+  },
+];
 
 /* ------------ PUBLIC images (placed in /public/showcase) ------------ */
 const IMGS = {
@@ -131,76 +201,6 @@ const allProjects = [
     alt: "AI integration services website screenshot",
     summary:
       "Story-driven presentation of AI services with proof points and scannable modules.",
-  },
-];
-
-/* ------------ Packages (RESTORED: missing this caused the white screen) ------------ */
-const packages = [
-  {
-    slug: "starter",
-    name: "Starter",
-    price: 900,
-    displayPrice: "$900",
-    days: 4,
-    rushDays: 2,
-    rushFee: 200,
-    blurb: "2–3 pages, custom design. Mobile + desktop. Modern animations.",
-    perfectFor: "Cafés, barbers, freelancers",
-    features: [
-      "2–3 custom pages",
-      "Responsive + performance pass",
-      "Simple lead/contact form",
-      "Launch in days, not weeks",
-    ],
-    cta: "Start Starter",
-    timelineNote:
-      "Typical timeline: 4 days (rush 2 days for an additional $200).",
-  },
-  {
-    slug: "growth",
-    name: "Growth",
-    price: 2300,
-    displayPrice: "$2,300",
-    days: 8,
-    rushDays: 6,
-    rushFee: 400,
-    blurb:
-      "5–7 pages, custom design + SEO. Contact/booking, Maps, integrations, content guidance.",
-    perfectFor: "Dentists, gyms, restaurants, small firms",
-    features: [
-      "5–7 custom pages",
-      "On-page SEO + schema",
-      "Contact / booking form + Maps",
-      "3rd-party integrations",
-      "Content guidance (no full copy)",
-    ],
-    highlight: true,
-    cta: "Grow with Growth",
-    timelineNote:
-      "Typical timeline: 8 days (rush 6 days for an additional $400).",
-  },
-  {
-    slug: "scale",
-    name: "Scale",
-    price: 7000,
-    displayPrice: "$7,000",
-    days: 14,
-    rushDays: 10,
-    rushFee: 800,
-    blurb:
-      "10+ pages, full custom design. Strategy (brand/positioning/funnel), advanced SEO + analytics, booking/e-commerce/CRM, copy support.",
-    perfectFor: "Law firms, real estate, healthcare, e-commerce brands",
-    features: [
-      "10+ pages, full custom",
-      "Strategy session + funnel mapping",
-      "Advanced SEO + analytics",
-      "Booking systems / e-commerce",
-      "CRM integrations",
-      "Copywriting support",
-    ],
-    cta: "Scale with Scale",
-    timelineNote:
-      "Typical timeline: 14 days (rush 10 days for an additional $800).",
   },
 ];
 
@@ -1038,3 +1038,243 @@ function Pay({ slug }) {
     let cleanup = () => {};
     async function mount() {
       if (!clientSecret || !containerRef.current) return;
+
+      const { loadStripe } = await import("@stripe/stripe-js");
+      const stripe = await loadStripe(
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY
+      );
+      if (!stripe) { setError("Stripe not available."); return; }
+
+      const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
+      checkout.mount(containerRef.current);
+      cleanup = () => checkout.destroy();
+    }
+    mount();
+    return () => cleanup();
+  }, [clientSecret]);
+
+  const total = pkg.price + (rush ? pkg.rushFee : 0);
+
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h2 font-semibold">Payment</h1>
+
+        <div className="card p-6 mt-6">
+          <div className="ts-h4 font-semibold">{pkg.name}</div>
+          <div className="ts-h6 text-slate-600 mt-1">
+            Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
+          </div>
+
+        <div className="flex items-center justify-between mt-4">
+            <label className="ts-h6 flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={rush}
+                onChange={(e) => setRush(e.target.checked)}
+              />
+              Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
+            </label>
+            <div className="ts-h4 font-semibold">Total: ${total}</div>
+          </div>
+
+          <div className="mt-6">
+            {error && (
+              <div className="ts-h6 text-red-600 mb-3 whitespace-pre-wrap">
+                {error}
+              </div>
+            )}
+            <div ref={containerRef} id="checkout" className="w-full" />
+          </div>
+
+          <div className="mt-4 ts-h6 text-slate-500">
+            Secure payment powered by Stripe.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Thank You (with session summary) ---------------- */
+
+function ThankYou() {
+  const [summary, setSummary] = useState(null);
+  const [error, setError] = useState("");
+  const sessionId = new URLSearchParams(window.location.hash.split("?")[1] || "").get("session_id");
+
+  useEffect(() => {
+    async function load() {
+      if (!sessionId) return;
+      try {
+        const res = await fetch(`/.netlify/functions/session-status?session_id=${encodeURIComponent(sessionId)}`);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || "Failed");
+        setSummary(json);
+      } catch (e) {
+        setError("We received your payment, but couldn’t load the details. We’ll email you shortly.");
+      }
+    }
+    load();
+  }, [sessionId]);
+
+  return (
+    <section className="py-16">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h2 font-semibold mb-2">Thank you!</h1>
+        <p className="ts-h6 text-slate-600">
+          Your payment was received. We’ll email you shortly from <b>contact@citeks.net</b> with next steps.
+        </p>
+
+        {summary && (
+          <div className="card p-6 mt-6">
+            <div className="ts-h5 font-semibold">Purchase summary</div>
+            <div className="ts-h6 text-slate-600 mt-2 stack-tight">
+              <div><b>Status:</b> {summary.payment_status}</div>
+              <div><b>Transaction ID:</b> {summary.payment_intent_id}</div>
+              <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
+              <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
+              <div><b>Total:</b> {summary.amount_total
+                ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+                : "—"}</div>
+            </div>
+            <div className="ts-h6 text-slate-600 mt-3">
+              Forgot to include something in your brief? Send a message via the <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a> and include your Transaction ID above. We’ll attach your note to the project.
+            </div>
+          </div>
+        )}
+        {error && <div className="ts-h6 text-red-600 mt-4">{error}</div>}
+
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Footer ---------------- */
+
+function Footer() {
+  return (
+    <footer className="pt-10 border-t border-[var(--clr-subtle)] bg-white">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <div className="ts-h5 font-semibold">CITEKS</div>
+            <div className="ts-h6 text-slate-600 mt-2">Modern sites that convert.</div>
+            <div className="ts-h6 text-slate-600 mt-2">Langmyrvegen 22a • Europe/Oslo</div>
+            <a href="mailto:contact@citeks.net" className="ts-h6 text-[var(--clr-accent)] underline mt-2 inline-block">contact@citeks.net</a>
+          </div>
+          <div>
+            <div className="ts-h6 font-semibold mb-2">Navigate</div>
+            <ul className="ts-h6 text-slate-700 space-y-2">
+              <li><a href="#/" className="hover:opacity-80">Home</a></li>
+              <li><a href="#/why-us" className="hover:opacity-80">Why us</a></li>
+              <li><a href="#/projects" className="hover:opacity-80">Projects</a></li>
+              <li><a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="hover:opacity-80">Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="ts-h6 font-semibold mb-2">Info</div>
+            <ul className="ts-h6 text-slate-700 space-y-2">
+              <li><a href="#/privacy" className="hover:opacity-80">Privacy</a></li>
+              <li><a href="#/tech-terms" className="hover:opacity-80">Technical terms</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="ts-h6 font-semibold mb-2">Follow</div>
+            <ul className="ts-h6 text-slate-700 space-y-2">
+              <li><a href="https://www.linkedin.com/company/108523228" target="_blank" rel="noreferrer" className="hover:opacity-80">LinkedIn</a></li>
+              <li><a href="https://www.instagram.com/citeks_net/" target="_blank" rel="noreferrer" className="hover:opacity-80">Instagram</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 py-6 border-t border-[var(--clr-subtle)] mt-8">
+          <div className="ts-h6">© {new Date().getFullYear()} CITEKS — All rights reserved</div>
+          <div className="ts-h6">
+            <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="hover:opacity-80">Pricing</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ---------------- Hidden pages ---------------- */
+
+function PrivacyPolicy() {
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h1 font-semibold mb-4">Privacy Policy</h1>
+        <div className="card p-6 ts-h6 text-slate-700 space-y-3">
+          <p><b>Who we are.</b> CITEKS is a web design studio focused on fast, modern websites that convert. You can reach us at contact@citeks.net.</p>
+          <p><b>What we collect.</b> When you submit the contact form or a project brief, we collect the information you provide (e.g., name, email, company, project details) and any files you upload. We do not use cookies.</p>
+          <p><b>How we use data.</b> We use your details to respond, prepare proposals, deliver services, process payments (via Stripe), and maintain records for accounting and legal compliance.</p>
+          <p><b>How we share.</b> We only share data with service providers needed to operate (e.g., Netlify for hosting, Stripe for payments). We don’t sell personal data.</p>
+          <p><b>Retention.</b> We keep information only as long as needed to provide services and meet legal obligations, then delete or anonymize it.</p>
+          <p><b>Security.</b> We use reputable providers (Netlify/Stripe) with modern security. No method is 100% secure, but we take reasonable steps to protect your data.</p>
+          <p><b>Your rights.</b> You can request access, correction, or deletion of your data by emailing contact@citeks.net.</p>
+          <p><b>International.</b> We may process data in the EEA and other locations through our providers. Transfers use appropriate safeguards provided by those providers.</p>
+          <p><b>Updates.</b> We may update this policy as our services change. We’ll post the new version here.</p>
+        </div>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
+      </div>
+    </section>
+  );
+}
+
+function TechTerms() {
+  const rows = [
+    ["CTA (Call to Action)", "The primary action you want a visitor to take (e.g., call, book, buy)."],
+    ["Conversion rate (CVR)", "Percentage of visitors who complete the desired action."],
+    ["IA (Information Architecture)", "How content is structured and labeled for easy navigation."],
+    ["Responsive", "Layouts that adapt to different screen sizes (mobile/desktop)."],
+    ["SEO", "Optimizing content and structure so search engines can find and rank pages."],
+    ["Schema", "Structured data markup that helps search engines understand your content."],
+    ["CRM", "A system to track leads/customers and integrate forms/booking."],
+    ["Analytics", "Tracking user behavior and performance (e.g., conversions)."],
+    ["Accessibility", "Designing so people of all abilities can use the site (contrast, keyboard, labels)."],
+    ["Performance", "How quickly a page loads and responds to interaction."],
+  ];
+
+  return (
+    <section className="py-10 lg:py-24">
+      <div className="mx-auto max-w-[var(--container)] px-6">
+        <h1 className="ts-h1 font-semibold mb-4">Technical terms</h1>
+        <div className="card p-6">
+          <ul className="ts-h6 text-slate-700 space-y-2">
+            {rows.map(([term, def]) => (
+              <li key={term}><b>{term}:</b> {def}</li>
+            ))}
+          </ul>
+        </div>
+        <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Netlify: Hidden forms so they are detected at build ---------------- */
+
+function NetlifyHiddenForms() {
+  return (
+    <div style={{display:"none"}}>
+      <form name="brief-starter" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="brief-growth" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="brief-scale" data-netlify="true" encType="multipart/form-data">
+        <input name="company" />
+        <input name="assetsFiles" type="file" />
+      </form>
+      <form name="contact" data-netlify="true">
+        <input name="first" />
+      </form>
+    </div>
+  );
+}
