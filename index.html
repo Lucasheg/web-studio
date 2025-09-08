@@ -8,11 +8,12 @@
   <body>
     <div id="root"></div>
 
-    <!-- Netlify FORM DETECTORS (static + hidden). Critical: must be in built HTML -->
+    <!-- Netlify FORM DETECTORS (static + hidden). Must be in built HTML -->
     <div style="display:none">
       <!-- Contact -->
       <form name="contact" data-netlify="true" netlify-honeypot="bot-field">
         <input type="hidden" name="form-name" value="contact" />
+        <input name="title" />
         <input name="first" />
         <input name="last" />
         <input name="email" />
@@ -24,38 +25,98 @@
       <!-- Brief: Starter -->
       <form name="brief-starter" data-netlify="true" enctype="multipart/form-data">
         <input type="hidden" name="form-name" value="brief-starter" />
+        <input name="package" />
+        <input name="rush" />
+        <input name="total" />
         <input name="company" />
         <input name="contact" />
         <input name="email" />
         <input name="phone" />
         <input name="pages" />
         <textarea name="goal"></textarea>
-        <!-- at least one file input so Netlify provisions file handling -->
-        <input name="assetsFiles" type="file" />
+        <textarea name="assetsNote"></textarea>
+        <textarea name="seo"></textarea>
+        <input name="integrations" />
+        <input name="ecommerce" />
+        <input name="crm" />
+        <textarea name="references"></textarea>
+        <input name="competitors" />
+        <textarea name="notes"></textarea>
+        <!-- up to 10 files -->
+        <input name="assetsFile1" type="file" />
+        <input name="assetsFile2" type="file" />
+        <input name="assetsFile3" type="file" />
+        <input name="assetsFile4" type="file" />
+        <input name="assetsFile5" type="file" />
+        <input name="assetsFile6" type="file" />
+        <input name="assetsFile7" type="file" />
+        <input name="assetsFile8" type="file" />
+        <input name="assetsFile9" type="file" />
+        <input name="assetsFile10" type="file" />
       </form>
 
       <!-- Brief: Growth -->
       <form name="brief-growth" data-netlify="true" enctype="multipart/form-data">
         <input type="hidden" name="form-name" value="brief-growth" />
+        <input name="package" />
+        <input name="rush" />
+        <input name="total" />
         <input name="company" />
         <input name="contact" />
         <input name="email" />
         <input name="phone" />
         <input name="pages" />
         <textarea name="goal"></textarea>
-        <input name="assetsFiles" type="file" />
+        <textarea name="assetsNote"></textarea>
+        <textarea name="seo"></textarea>
+        <input name="integrations" />
+        <input name="ecommerce" />
+        <input name="crm" />
+        <textarea name="references"></textarea>
+        <input name="competitors" />
+        <textarea name="notes"></textarea>
+        <input name="assetsFile1" type="file" />
+        <input name="assetsFile2" type="file" />
+        <input name="assetsFile3" type="file" />
+        <input name="assetsFile4" type="file" />
+        <input name="assetsFile5" type="file" />
+        <input name="assetsFile6" type="file" />
+        <input name="assetsFile7" type="file" />
+        <input name="assetsFile8" type="file" />
+        <input name="assetsFile9" type="file" />
+        <input name="assetsFile10" type="file" />
       </form>
 
       <!-- Brief: Scale -->
       <form name="brief-scale" data-netlify="true" enctype="multipart/form-data">
         <input type="hidden" name="form-name" value="brief-scale" />
+        <input name="package" />
+        <input name="rush" />
+        <input name="total" />
         <input name="company" />
         <input name="contact" />
         <input name="email" />
         <input name="phone" />
         <input name="pages" />
         <textarea name="goal"></textarea>
-        <input name="assetsFiles" type="file" />
+        <textarea name="assetsNote"></textarea>
+        <textarea name="seo"></textarea>
+        <input name="integrations" />
+        <input name="ecommerce" />
+        <input name="crm" />
+        <textarea name="references"></textarea>
+        <input name="competitors" />
+        <textarea name="notes"></textarea>
+        <input name="assetsFile1" type="file" />
+        <input name="assetsFile2" type="file" />
+        <input name="assetsFile3" type="file" />
+        <input name="assetsFile4" type="file" />
+        <input name="assetsFile5" type="file" />
+        <input name="assetsFile6" type="file" />
+        <input name="assetsFile7" type="file" />
+        <input name="assetsFile8" type="file" />
+        <input name="assetsFile9" type="file" />
+        <input name="assetsFile10" type="file" />
       </form>
     </div>
 
