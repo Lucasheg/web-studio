@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -18,13 +18,12 @@ import {
 /**
  * CITEKS – High-CVR Web Studio (single-file app)
  * Routes: /#/, /#/why-us, /#/projects, /#/brief/:slug, /#/pay/:slug, /#/thank-you, /#/privacy, /#/tech-terms
- * - Home hero + large Showcase (real screenshots, near 1:1 aspect; own section).
- * - Projects page: clean “pasted” screenshots (no bubble), gym images grouped.
- * - Mobile type scale = 2 steps smaller (including hero).
- * - Netlify forms (contact + briefs, with file upload).
+ * - Home hero + Showcase section (rectangle 2:1, big but not oversized; object-contain to avoid cropping).
+ * - Projects page: smaller rectangle images (2:1), varied desktop layout; mobile much smaller + gym has connecting text between images.
+ * - Mobile type scale: stays two steps smaller (as you liked).
+ * - Netlify forms (contact + briefs, file upload).
  * - Stripe Embedded Checkout (Netlify Functions).
  * - Thank-you: session summary.
- * - Design rules honored: major-third, 12/4 grid, 8pt spacing, 60/30/10 palette.
  */
 
 function cx(...classes) {
@@ -40,7 +39,7 @@ const theme = {
   subtle: "#E5E7EB",
 };
 
-// Major Third scale (desktop/default)
+// Desktop (Major Third)
 const typeScale = {
   p: 16,
   h6: 20,
@@ -52,7 +51,7 @@ const typeScale = {
 };
 
 // Showcase items (home slider + projects page)
-// NOTE: ensure these files exist in /public/showcase/
+// Make sure the files exist at /public/showcase/...
 const showcaseSlides = [
   {
     key: "harbor-sage",
@@ -94,14 +93,16 @@ const allProjects = {
   gym: {
     title: "Vigor Lab — Local Gym (Starter)",
     blurb:
-      "Bold, energetic, and action-led. The pair of sections show a high-energy hero and a clear programs matrix, optimized for fast decisions and quick sign-ups.",
+      "Bold, energetic, and action-led. The two sections work together — a high-energy hero and a clear programs matrix — optimized for fast decisions and quick sign-ups.",
     a: "/showcase/vigor-lab-hero.png",
     b: "/showcase/vigor-lab-programs.png",
+    connective:
+      "Together, the hero primes motivation while the programs grid reduces friction — one primary CTA repeated consistently so people act quickly.",
   },
   barber: {
     title: "Urban Barber (Starter)",
     blurb:
-      "A personal, editorial take with warm tones and craft details. It feels curated, not templated — with clean structure and clear booking flow.",
+      "A personal, editorial take with warm tones and craft details. It feels curated, not templated — with clean structure and a clear booking flow.",
     src: "/showcase/urban-barber.png",
   },
   ai: {
@@ -269,10 +270,32 @@ export default function App() {
         .btn-accent:hover { background: var(--clr-accent-hover); }
         .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,.35); }
 
+        /* ---------- ASPECT RATIO HELPERS (2:1 rectangles) ---------- */
+        .ar-2-1 { aspect-ratio: 2 / 1; }
+        .img-frame { position: relative; width: 100%; }
+        .img-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+
+        /* Home Showcase sizing: big but not oversized */
+        .showcase-frame { max-height: min(560px, 62vh); }
+        @media (max-width: 1024px) {
+          .showcase-frame { max-height: 420px; }
+        }
+        @media (max-width: 480px) {
+          .showcase-frame { max-height: 240px; }
+        }
+
+        /* Projects images: smaller than home showcase */
+        .project-frame { max-height: 420px; }
+        @media (max-width: 1024px) {
+          .project-frame { max-height: 320px; }
+        }
+        @media (max-width: 480px) {
+          .project-frame { max-height: 200px; }
+        }
+
         /* ---------- TABLET TUNING ---------- */
         @media (min-width: 481px) and (max-width: 1024px) {
           :root {
-            /* one step smaller on tablet for headings */
             --ts-h1: ${typeScale.h2}px;
             --ts-h2: ${typeScale.h3}px;
             --ts-h3: ${typeScale.h4}px;
@@ -282,20 +305,17 @@ export default function App() {
           }
         }
 
-        /* ---------- MOBILE: two steps smaller across the board ---------- */
+        /* ---------- MOBILE: two steps smaller (as requested and confirmed) ---------- */
         @media (max-width: 480px) {
           :root {
-            --ts-p: 16px; /* keep p readable */
-            --ts-h1: ${typeScale.h3}px; /* 2 steps down */
+            --ts-p: 16px;
+            --ts-h1: ${typeScale.h3}px;
             --ts-h2: ${typeScale.h4}px;
             --ts-h3: ${typeScale.h5}px;
             --ts-h4: ${typeScale.h6}px;
-            --ts-h5: 16px;  /* equals p */
+            --ts-h5: 16px;
             --ts-h6: 14px;
           }
-          .tight-section { padding-top: 16px !important; padding-bottom: 16px !important; }
-          .tight-block { margin-bottom: 16px !important; }
-          .card { border-radius: 1rem; }
         }
       `}</style>
 
@@ -341,7 +361,6 @@ function Header() {
   return (
     <div className="w-full bg-white/70 backdrop-blur sticky top-0 z-50 border-b border-[var(--clr-subtle)]">
       <div className="mx-auto max-w-[var(--container)] px-6 py-2 flex items-center justify-between">
-        {/* Logo acts as Home */}
         <a href="#/" className="ts-h6 font-semibold" onClick={() => setOpen(false)}>CITEKS</a>
         <div className="hidden md:flex items-center gap-6 justify-end flex-1">
           <a href="#/" className="ts-h6 hover:opacity-80">Home</a>
@@ -421,7 +440,7 @@ function Hero() {
             <p className="ts-h5 text-slate-600 max-w-2xl mb-6">
               We design and build fast, modern sites that feel premium and guide users to one clear action. Psychology-backed structure. Motion with restraint. Search-friendly. Easy to update.
             </p>
-            <div className="flex items-center gap-4 tight-block">
+            <div className="flex items-center gap-4">
               <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('packages');}} className="btn-accent px-6 py-3 rounded-full inline-flex items-center gap-2 ts-h6"><Rocket className="w-4 h-4"/> See packages</a>
               <a href="#/projects" className="ts-h6 inline-flex items-center gap-2 hover:opacity-80">View projects <ArrowRight className="w-4 h-4"/></a>
             </div>
@@ -437,7 +456,7 @@ function Hero() {
   );
 }
 
-/* Home Showcase – big, own section, near-square ratio images */
+/* Home Showcase – rectangle 2:1, big but not scroll-dominating */
 
 function ShowcaseHome() {
   const [index, setIndex] = useState(0);
@@ -461,35 +480,31 @@ function ShowcaseHome() {
           </a>
         </div>
 
-        <div className="relative overflow-hidden border border-[var(--clr-subtle)] rounded-xl">
-          {/* Aspect ratio ~919/886 (almost square) */}
-          <div
-            className="w-full relative"
-            style={{ aspectRatio: "919 / 886" }}
-          >
+        <div className="relative border border-[var(--clr-subtle)] rounded-xl overflow-hidden">
+          <div className={cx("img-frame ar-2-1 showcase-frame")}>
             <AnimatePresence mode="wait">
               <motion.img
                 key={slide.key}
                 src={slide.src}
                 alt={slide.title}
-                initial={{ opacity: 0, scale: 0.98 }}
+                initial={{ opacity: 0, scale: 0.995 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.02 }}
-                transition={{ duration: 0.6 }}
-                className="absolute inset-0 w-full h-full object-cover"
+                exit={{ opacity: 0, scale: 1.005 }}
+                transition={{ duration: 0.45 }}
+                className="img-el"
                 loading="eager"
               />
             </AnimatePresence>
 
-            {/* Caption overlay (subtle) */}
-            <div className="absolute left-0 right-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black/35 to-transparent text-white">
-              <div className="ts-h5 font-semibold">{slide.title}</div>
-              <div className="ts-h6 opacity-90 mt-1">{slide.caption}</div>
+            {/* Subtle bottom bar for caption (sits inside the frame) */}
+            <div className="absolute left-0 right-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/30 to-transparent text-white">
+              <div className="ts-h6 font-semibold">{slide.title}</div>
+              <div className="ts-h6 opacity-90">{slide.caption}</div>
             </div>
           </div>
 
           {/* Dots */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/85 backdrop-blur px-3 py-2 rounded-full">
+          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur px-3 py-2 rounded-full">
             {showcaseSlides.map((s, i) => (
               <button
                 key={s.key}
@@ -614,7 +629,7 @@ function ContactSection() {
   );
 }
 
-/* Projects page (no bubble, “pasted on page”, gym grouped) */
+/* ---------------- Projects page (varied desktop layout, smaller rectangles) ---------------- */
 
 function Projects() {
   return (
@@ -622,74 +637,95 @@ function Projects() {
       <div className="mx-auto max-w-[var(--container)] px-6">
         <h1 className="ts-h1 font-semibold mb-4">Projects</h1>
 
-        {/* Law – single image */}
-        <ProjectBlock
-          title={allProjects.law.title}
-          blurb={allProjects.law.blurb}
-          images={[allProjects.law.src]}
-        />
+        {/* Law — image left 7/12, text right 5/12 (desktop). Mobile stacks, smaller frame. */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
+          <div className="lg:col-span-7">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.law.src} alt="Harbor & Sage Law — Scale" className="img-el" loading="lazy" />
+            </Frame2x1>
+          </div>
+          <div className="lg:col-span-5">
+            <h3 className="ts-h4 font-semibold">{allProjects.law.title}</h3>
+            <p className="ts-h6 text-slate-600 mt-2">{allProjects.law.blurb}</p>
+          </div>
+        </div>
 
-        {/* Gym – paired images grouped */}
-        <ProjectBlock
-          title={allProjects.gym.title}
-          blurb={allProjects.gym.blurb}
-          images={[allProjects.gym.a, allProjects.gym.b]}
-          twoUp
-        />
+        {/* Gym — desktop: image / text / image; mobile: image, connective text, image (all small) */}
+        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6 items-start mb-12">
+          <div className="lg:col-span-5">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.gym.a} alt="Vigor Lab — Hero" className="img-el" loading="lazy" />
+            </Frame2x1>
+          </div>
+          <div className="lg:col-span-2 self-center">
+            <p className="ts-h6 text-slate-600">{allProjects.gym.connective}</p>
+          </div>
+          <div className="lg:col-span-5">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.gym.b} alt="Vigor Lab — Programs" className="img-el" loading="lazy" />
+            </Frame2x1>
+          </div>
+        </div>
+        <div className="lg:hidden mb-12">
+          <Frame2x1 className="project-frame">
+            <img src={allProjects.gym.a} alt="Vigor Lab — Hero" className="img-el" loading="lazy" />
+          </Frame2x1>
+          <p className="ts-h6 text-slate-600 mt-2">{allProjects.gym.connective}</p>
+          <Frame2x1 className="project-frame mt-3">
+            <img src={allProjects.gym.b} alt="Vigor Lab — Programs" className="img-el" loading="lazy" />
+          </Frame2x1>
+          <h3 className="ts-h4 font-semibold mt-4">{allProjects.gym.title}</h3>
+          <p className="ts-h6 text-slate-600 mt-1">{allProjects.gym.blurb}</p>
+        </div>
 
-        {/* Barber */}
-        <ProjectBlock
-          title={allProjects.barber.title}
-          blurb={allProjects.barber.blurb}
-          images={[allProjects.barber.src]}
-        />
+        {/* Barber — text left 5/12, image right 7/12 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
+          <div className="lg:col-span-5 order-2 lg:order-1">
+            <h3 className="ts-h4 font-semibold">{allProjects.barber.title}</h3>
+            <p className="ts-h6 text-slate-600 mt-2">{allProjects.barber.blurb}</p>
+          </div>
+          <div className="lg:col-span-7 order-1 lg:order-2">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.barber.src} alt="Urban Barber — Starter" className="img-el" loading="lazy" />
+            </Frame2x1>
+          </div>
+        </div>
 
-        {/* AI */}
-        <ProjectBlock
-          title={allProjects.ai.title}
-          blurb={allProjects.ai.blurb}
-          images={[allProjects.ai.src]}
-        />
+        {/* AI — centered, narrower (8/12) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-12">
+          <div className="lg:col-span-2" />
+          <div className="lg:col-span-8">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.ai.src} alt="SentienceWorks — Growth" className="img-el" loading="lazy" />
+            </Frame2x1>
+            <h3 className="ts-h4 font-semibold mt-3">{allProjects.ai.title}</h3>
+            <p className="ts-h6 text-slate-600 mt-1">{allProjects.ai.blurb}</p>
+          </div>
+          <div className="lg:col-span-2" />
+        </div>
 
-        {/* Museum */}
-        <ProjectBlock
-          title={allProjects.museum.title}
-          blurb={allProjects.museum.blurb}
-          images={[allProjects.museum.src]}
-        />
+        {/* Museum — slightly wider (10/12) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-1" />
+          <div className="lg:col-span-10">
+            <Frame2x1 className="project-frame">
+              <img src={allProjects.museum.src} alt="Meridian Museum — Concept" className="img-el" loading="lazy" />
+            </Frame2x1>
+            <h3 className="ts-h4 font-semibold mt-3">{allProjects.museum.title}</h3>
+            <p className="ts-h6 text-slate-600 mt-1">{allProjects.museum.blurb}</p>
+          </div>
+          <div className="lg:col-span-1" />
+        </div>
       </div>
     </section>
   );
 }
 
-function ProjectBlock({ title, blurb, images, twoUp = false }) {
+/* Small helper for 2:1 frames */
+function Frame2x1({ children, className = "" }) {
   return (
-    <div className="mb-10 md:mb-16">
-      <div className="ts-h4 font-semibold">{title}</div>
-      <p className="ts-h6 text-slate-600 mt-2">{blurb}</p>
-
-      {/* Images */}
-      {twoUp ? (
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {images.map((src) => (
-            <div key={src} className="relative w-full border border-[var(--clr-subtle)] rounded-lg overflow-hidden">
-              <div style={{ aspectRatio: "919 / 886" }} className="relative w-full">
-                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-4">
-          {images.map((src) => (
-            <div key={src} className="relative w-full border border-[var(--clr-subtle)] rounded-lg overflow-hidden">
-              <div style={{ aspectRatio: "919 / 886" }} className="relative w-full">
-                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className={cx("relative border border-[var(--clr-subtle)] rounded-lg overflow-hidden img-frame ar-2-1", className)}>
+      {children}
     </div>
   );
 }
@@ -928,17 +964,14 @@ function Brief({ slug }) {
             Optional rush delivery will be displayed in your total and can also be toggled on the payment page.
           </div>
 
-          {/* Basic info (REQUIRED) */}
           <FormField label="Company / brand" value={form.company} onChange={(v)=>setForm({...form, company:v})} error={errors.company}/>
           <FormField label="Contact name" value={form.contact} onChange={(v)=>setForm({...form, contact:v})} error={errors.contact}/>
           <FormField label="Email" type="email" value={form.email} onChange={(v)=>setForm({...form, email:v})} error={errors.email}/>
           <FormField label="Phone" value={form.phone} onChange={(v)=>setForm({...form, phone:v})} error={errors.phone}/>
 
-          {/* Project (REQUIRED) */}
           <FormField label="Goal of the site" textarea value={form.goal} onChange={(v)=>setForm({...form, goal:v})} error={errors.goal}/>
           <FormField label="Estimated pages" value={form.pages} onChange={(v)=>setForm({...form, pages:v})} error={errors.pages}/>
 
-          {/* Assets: either text OR files is REQUIRED */}
           <FormField
             label="Available assets (logo, photos, copy?) – brief notes"
             textarea
@@ -958,7 +991,6 @@ function Brief({ slug }) {
             <div className="ts-h6 text-slate-500 mt-1">You can upload multiple files. We’ll receive them attached.</div>
           </div>
 
-          {/* Optional */}
           <FormField label="SEO targets (keywords/locations)" textarea value={form.seo} onChange={(v)=>setForm({...form, seo:v})}/>
           <FormField label="Integrations (maps, booking, payments)" value={form.integrations} onChange={(v)=>setForm({...form, integrations:v})}/>
           <FormField label="E-commerce (if needed)" value={form.ecommerce} onChange={(v)=>setForm({...form, ecommerce:v})}/>
@@ -967,7 +999,6 @@ function Brief({ slug }) {
           <FormField label="Competitors" value={form.competitors} onChange={(v)=>setForm({...form, competitors:v})}/>
           <FormField label="Notes / constraints" textarea value={form.notes} onChange={(v)=>setForm({...form, notes:v})}/>
 
-          {/* Rush */}
           <div className="md:col-span-2 flex items-center justify-between border-t border-[var(--clr-subtle)] pt-4 mt-2">
             <label className="ts-h6 flex items-center gap-2">
               <input type="checkbox" checked={rush} onChange={(e)=>setRush(e.target.checked)} />
@@ -1082,7 +1113,7 @@ function Pay({ slug }) {
             Base price {pkg.displayPrice}. Typical timeline {pkg.days} days.
           </div>
 
-        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4">
             <label className="ts-h6 flex items-center gap-2">
               <input type="checkbox" checked={rush} onChange={(e) => setRush(e.target.checked)} />
               Rush delivery: finish in {pkg.rushDays} days (+${pkg.rushFee})
