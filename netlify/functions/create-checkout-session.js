@@ -1,4 +1,4 @@
-// /.netlify/functions/create-checkout-session
+// /.netlify/functions/create-checkout-session.js
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -22,18 +22,16 @@ export async function handler(event) {
       return { statusCode: 400, body: JSON.stringify({ error: "Invalid package" }) };
     }
 
-    const baseUrls = {
-      success: `${origin || "https://example.com"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-      cancel:  `${origin || "https://example.com"}/#/pay/${slug}?rush=${rush ? "1" : "0"}`
-    };
+    const successUrl = `${origin || "https://example.com"}/#/thank-you?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl  = `${origin || "https://example.com"}/#/pay/${slug}`;
 
-    // Default to embedded; allow hosted fallback via uiMode flag
+    // embedded vs hosted
     if (uiMode === "hosted") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         line_items: [{ price, quantity: 1 }],
-        success_url: baseUrls.success,
-        cancel_url: baseUrls.cancel,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         metadata: { package: slug, rush: rush ? "true" : "false" },
       });
       return {
@@ -41,22 +39,20 @@ export async function handler(event) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: session.url }),
       };
+    } else {
+      const session = await stripe.checkout.sessions.create({
+        ui_mode: "embedded",
+        mode: "payment",
+        line_items: [{ price, quantity: 1 }],
+        return_url: successUrl,
+        metadata: { package: slug, rush: rush ? "true" : "false" },
+      });
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientSecret: session.client_secret }),
+      };
     }
-
-    // Embedded
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: "embedded",
-      mode: "payment",
-      line_items: [{ price, quantity: 1 }],
-      return_url: baseUrls.success,
-      metadata: { package: slug, rush: rush ? "true" : "false" },
-    });
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clientSecret: session.client_secret }),
-    };
   } catch (err) {
     console.error(err);
     return { statusCode: 500, body: JSON.stringify({ error: "Server Error" }) };
