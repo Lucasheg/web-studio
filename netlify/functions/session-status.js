@@ -11,20 +11,30 @@ export async function handler(event) {
     }
 
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["payment_intent.latest_charge", "line_items.data.price"],
+      expand: [
+        "payment_intent.charges",
+        "payment_intent.latest_charge",
+        "line_items",
+      ],
     });
 
-    // Fallback totals
-    let lineItemsTotal = null;
-    if (session?.line_items?.data?.length) {
-      lineItemsTotal = session.line_items.data.reduce((sum, li) => {
-        const unit = li.price?.unit_amount || 0;
-        const qty = li.quantity || 1;
-        return sum + unit * qty;
-      }, 0);
+    const piObj = typeof session.payment_intent === "string" ? null : session.payment_intent;
+    const payment_intent_id = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : (piObj?.id || null);
+
+    let charge_id = null;
+    if (piObj?.latest_charge) {
+      charge_id = typeof piObj.latest_charge === "string" ? piObj.latest_charge : piObj.latest_charge.id;
+    }
+    if (!charge_id && Array.isArray(piObj?.charges?.data) && piObj.charges.data[0]) {
+      charge_id = piObj.charges.data[0].id;
     }
 
-    const chargeId = session?.payment_intent?.latest_charge?.id || null;
+    // Optional derived total from line items (when amount_total not set)
+    const line_items_total = (session.amount_total == null && session.line_items?.data?.length)
+      ? session.line_items.data.reduce((sum, li) => sum + (li.amount_total || 0), 0)
+      : null;
 
     return {
       statusCode: 200,
@@ -33,11 +43,11 @@ export async function handler(event) {
         id: session.id,
         status: session.status,
         payment_status: session.payment_status,
-        payment_intent_id: session.payment_intent?.id || null,
-        payment_intent_status: session.payment_intent?.status || null,
-        charge_id: chargeId,
-        amount_total: session.amount_total ?? null,
-        line_items_total: lineItemsTotal,
+        payment_intent_id,
+        charge_id,
+        payment_intent_status: piObj?.status || null,
+        amount_total: session.amount_total,
+        line_items_total,
         currency: session.currency,
         metadata: session.metadata || {},
       }),
