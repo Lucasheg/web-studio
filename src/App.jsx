@@ -1366,31 +1366,40 @@ function ThankYou() {
         </p>
 
         {summary && (
-          <div className="card p-6 mt-6">
-            <div className="ts-h5 font-semibold">Purchase summary</div>
-            <div className="ts-h6 text-slate-600 mt-2">
-              <div><b>Status:</b> {summary.payment_status}</div>
-              <div>
-                <b>Transaction ID:</b> {summary.payment_intent_id || summary.charge_id || summary.id}
-              </div>
-              <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
-              <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
-              <div>
-                <b>Total:</b>{" "}
-                {typeof summary.amount_total === "number"
-                  ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
-                  : typeof summary.line_items_total === "number"
-                    ? `$${(summary.line_items_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
-                    : "—"}
-              </div>
-            </div>
-            <div className="ts-h6 text-slate-600 mt-3">
-              Forgot to include something in your brief? Send a message via the{" "}
-              <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a>{" "}
-              and include your Transaction ID above. We’ll attach your note to the project.
-            </div>
-          </div>
-        )}
+  <div className="card p-6 mt-6">
+    <div className="ts-h5 font-semibold">Purchase summary</div>
+    <div className="ts-h6 text-slate-600 mt-2">
+      <div><b>Status:</b> {summary.payment_status}</div>
+      {(() => {
+        const hasCharge = !!(summary.payment_intent_id || summary.charge_id);
+        const idLabel = hasCharge ? "Transaction ID" : "Order ID";
+        const idValue = hasCharge
+          ? (summary.payment_intent_id || summary.charge_id)
+          : summary.id; // cs_...
+        return (
+          <div><b>{idLabel}:</b> {idValue}</div>
+        );
+      })()}
+      <div><b>Package:</b> {summary.metadata?.package || "—"}</div>
+      <div><b>Rush:</b> {summary.metadata?.rush === "true" ? "Yes" : "No"}</div>
+      <div>
+        <b>Total:</b>{" "}
+        {typeof summary.amount_total === "number"
+          ? `$${(summary.amount_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+          : typeof summary.line_items_total === "number"
+            ? `$${(summary.line_items_total/100).toFixed(2)} ${summary.currency?.toUpperCase()}`
+            : "—"}
+      </div>
+    </div>
+    <div className="ts-h6 text-slate-600 mt-3">
+      Forgot to include something in your brief? Send a message via the{" "}
+      <a href="#/" onClick={(e)=>{e.preventDefault(); scrollToId('contact');}} className="underline">contact form</a>{" "}
+      and include your{" "}
+      {((summary.payment_intent_id || summary.charge_id) ? "Transaction ID" : "Order ID")}{" "}
+      above. We’ll attach your note to the project.
+    </div>
+  </div>
+)}
         {error && <div className="ts-h6 text-red-600 mt-4">{error}</div>}
 
         <a href="#/" className="ts-h6 btn-accent px-5 py-2 rounded-full inline-flex items-center gap-2 mt-6">Back to home</a>
