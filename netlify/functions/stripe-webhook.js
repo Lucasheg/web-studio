@@ -1,12 +1,12 @@
 // /.netlify/functions/stripe-webhook.js
 import Stripe from "stripe";
 
-// --- ENV needed ---
-// STRIPE_SECRET_KEY         (already set)
-// STRIPE_WEBHOOK_SECRET     <-- NEW (from Stripe dashboard for this endpoint)
-// RESEND_API_KEY            (already set)
-// FROM_EMAIL                (e.g., "CITEKS <contact@citeks.net>")
-// TO_EMAIL                  (your inbox for admin copies)
+// ENV required:
+// STRIPE_SECRET_KEY
+// STRIPE_WEBHOOK_SECRET
+// RESEND_API_KEY
+// FROM_EMAIL  (e.g., "CITEKS <contact@citeks.net>")
+// TO_EMAIL    (admin inbox)
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -26,7 +26,7 @@ export async function handler(event) {
     event.headers["Stripe-Signature"] ||
     event.headers["STRIPE-SIGNATURE"];
 
-  // Stripe needs the raw body (not parsed JSON)
+  // Stripe requires the raw body
   const rawBody = event.isBase64Encoded
     ? Buffer.from(event.body, "base64").toString("utf8")
     : event.body;
@@ -40,23 +40,27 @@ export async function handler(event) {
   }
 
   if (stripeEvent.type !== "checkout.session.completed") {
-    // ignore other events
     return { statusCode: 200, body: "Ignored" };
   }
 
   try {
     const session = stripeEvent.data.object;
 
-    // Retrieve expanded session to fetch PaymentIntent+Charge and line items
+    // Retrieve expanded session; expand PI + its charges to be robust across API versions
     const sessionFull = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ["payment_intent.latest_charge", "line_items.data.price"],
+      expand: [
+        "payment_intent.charges",
+        "payment_intent.latest_charge",
+        "line_items.data.price",
+        "customer_details",
+      ],
     });
 
     const meta = sessionFull.metadata || {};
     const slug = String(meta.package || meta.slug || "").toLowerCase(); // "starter" | "growth" | "scale"
     const rushSelected = String(meta.rush || "").toLowerCase() === "true";
 
-    // Timeline mapping based on your packages
+    // Timeline mapping (kept in sync with packages)
     const timelines = {
       starter: { days: 4, rushDays: 2, label: "Starter" },
       growth: { days: 8, rushDays: 6, label: "Growth" },
@@ -64,41 +68,60 @@ export async function handler(event) {
     };
     const tl = timelines[slug] || { days: "—", rushDays: "—", label: slug || "Custom" };
 
+    // Money
     const amount = typeof sessionFull.amount_total === "number"
       ? (sessionFull.amount_total / 100).toFixed(2)
       : null;
     const currency = (sessionFull.currency || "usd").toUpperCase();
+    const amountString = amount ? `${amount} ${currency}` : `${currency}`;
 
-    const pi = sessionFull.payment_intent;
-    const chargeId = pi?.latest_charge?.id || null;
-    const txId = pi?.id || chargeId || sessionFull.id; // PI → Charge → Session
+    // Transaction IDs (robust fallback chain)
+    const piObj = typeof sessionFull.payment_intent === "string"
+      ? null
+      : sessionFull.payment_intent;
 
+    const paymentIntentId = typeof sessionFull.payment_intent === "string"
+      ? sessionFull.payment_intent
+      : (piObj?.id || null);
+
+    let chargeId = null;
+    if (piObj?.latest_charge) {
+      chargeId = typeof piObj.latest_charge === "string"
+        ? piObj.latest_charge
+        : piObj.latest_charge.id;
+    }
+    if (!chargeId && Array.isArray(piObj?.charges?.data) && piObj.charges.data[0]) {
+      chargeId = piObj.charges.data[0].id;
+    }
+
+    const txId = paymentIntentId || chargeId || sessionFull.id; // PI → Charge → Session
+
+    // Customer email
     const customerEmail =
       sessionFull.customer_details?.email ||
       sessionFull.customer_email ||
       null;
 
-    // Build text fragments
-    const amountString = amount ? `${amount} ${currency}` : `${currency}`;
-    const rushText = rushSelected ? "rush selected" : "standard timeline";
-
-    // --- Emails ---
+    // Email infra
     const FROM = process.env.FROM_EMAIL || "contact@citeks.net";
     const TO = process.env.TO_EMAIL;
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
     if (!RESEND_API_KEY || !FROM || !TO) {
       console.error("Missing RESEND_API_KEY, FROM_EMAIL, or TO_EMAIL");
       return { statusCode: 500, body: "Email env missing" };
     }
 
-    // 1) Customer — Variant 1
+    // Build rush text
+    const rushText = rushSelected ? "rush selected" : "standard timeline";
+
+    // --- Customer email (Variant 1) ---
     if (customerEmail) {
       const subject = `CITEKS: Payment received — your ${tl.label} is locked in`;
       const html = `
         <div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;font-size:14px;line-height:1.6;">
           <p>Hi,</p>
-          <p>Thanks — your payment for <b>${escapeHtml(tl.label)}</b> (${escapeHtml(amountString)}) is confirmed. Your <b>Transaction ID</b> is <b>${escapeHtml(txId)}</b>.</p>
+          <p>Thanks — your payment for <b>${escapeHtml(tl.label)}</b> (${escapeHtml(amountString)}) is confirmed.
+          Your <b>Transaction ID</b> is <b>${escapeHtml(txId)}</b>.</p>
           <p><b>What happens next</b><br/>
           • We finalize your slot and share a brief kickoff note.<br/>
           • Timeline: <b>${escapeHtml(String(tl.days))} days</b> (${escapeHtml(rushText)}; rush timeline: <b>${escapeHtml(String(tl.rushDays))} days</b>).<br/>
@@ -113,14 +136,16 @@ export async function handler(event) {
       await sendResend(RESEND_API_KEY, { from: FROM, to: [customerEmail], subject, html });
     }
 
-    // 2) Admin copy (to you)
+    // --- Admin copy to you ---
     const adminSubject = `CITEKS: Payment received — ${tl.label} (${amountString})`;
     const adminHtml = `
       <div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;font-size:14px;line-height:1.6;">
         <h2 style="margin:0 0 8px 0;">Payment received</h2>
         <p><b>Package:</b> ${escapeHtml(tl.label)} &nbsp; <b>Rush:</b> ${rushSelected ? "Yes" : "No"}</p>
         <p><b>Total:</b> ${escapeHtml(amountString)} &nbsp; <b>Currency:</b> ${escapeHtml(currency)}</p>
-        <p><b>Transaction ID:</b> ${escapeHtml(txId)}</p>
+        <p><b>Payment Intent:</b> ${escapeHtml(paymentIntentId || "—")}<br/>
+           <b>Charge:</b> ${escapeHtml(chargeId || "—")}<br/>
+           <b>Transaction ID (shown to client):</b> ${escapeHtml(txId)}</p>
         <p><b>Customer email (Stripe):</b> ${escapeHtml(customerEmail || "—")}</p>
         <p><b>Timelines:</b> ${escapeHtml(String(tl.days))} days (rush ${escapeHtml(String(tl.rushDays))} days)</p>
         <p style="color:#475569;">Source: checkout.session.completed</p>
