@@ -1,12 +1,14 @@
 // /.netlify/functions/stripe-webhook.js
 import Stripe from "stripe";
 
-// ENV required:
-// STRIPE_SECRET_KEY
-// STRIPE_WEBHOOK_SECRET
-// RESEND_API_KEY
-// FROM_EMAIL  (e.g., "CITEKS <contact@citeks.net>")
-// TO_EMAIL    (admin inbox)
+/**
+ * ENV REQUIRED (Netlify → Site settings → Build & deploy → Environment):
+ * - STRIPE_SECRET_KEY         (sk_test_... or sk_live_...)
+ * - STRIPE_WEBHOOK_SECRET     (whsec_... for THIS endpoint + mode)
+ * - RESEND_API_KEY
+ * - FROM_EMAIL                e.g. "CITEKS <contact@citeks.net>"
+ * - TO_EMAIL                  your admin inbox (gets an internal copy)
+ */
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -21,12 +23,13 @@ export async function handler(event) {
     return { statusCode: 500, body: "Webhook misconfigured" };
   }
 
+  // Stripe signature header
   const sig =
     event.headers["stripe-signature"] ||
     event.headers["Stripe-Signature"] ||
     event.headers["STRIPE-SIGNATURE"];
 
-  // Stripe requires the raw body
+  // IMPORTANT: use the raw body for signature verification
   const rawBody = event.isBase64Encoded
     ? Buffer.from(event.body, "base64").toString("utf8")
     : event.body;
@@ -40,42 +43,43 @@ export async function handler(event) {
   }
 
   if (stripeEvent.type !== "checkout.session.completed") {
+    // Ignore everything else
     return { statusCode: 200, body: "Ignored" };
   }
 
   try {
     const session = stripeEvent.data.object;
 
-    // Retrieve expanded session; expand PI + its charges to be robust across API versions
+    // Retrieve the full session and expand PI+charges so we can compute a solid ID
     const sessionFull = await stripe.checkout.sessions.retrieve(session.id, {
       expand: [
         "payment_intent.charges",
         "payment_intent.latest_charge",
-        "line_items.data.price",
-        "customer_details",
+        "line_items",
       ],
     });
 
+    // Metadata from your create session call
     const meta = sessionFull.metadata || {};
     const slug = String(meta.package || meta.slug || "").toLowerCase(); // "starter" | "growth" | "scale"
     const rushSelected = String(meta.rush || "").toLowerCase() === "true";
 
-    // Timeline mapping (kept in sync with packages)
+    // Package timelines (keep in sync with UI)
     const timelines = {
       starter: { days: 4, rushDays: 2, label: "Starter" },
-      growth: { days: 8, rushDays: 6, label: "Growth" },
-      scale: { days: 14, rushDays: 10, label: "Scale" },
+      growth:  { days: 8, rushDays: 6, label: "Growth" },
+      scale:   { days: 14, rushDays: 10, label: "Scale" },
     };
     const tl = timelines[slug] || { days: "—", rushDays: "—", label: slug || "Custom" };
 
-    // Money
+    // Amount/currency
     const amount = typeof sessionFull.amount_total === "number"
       ? (sessionFull.amount_total / 100).toFixed(2)
-      : null;
+      : null; // can be null for some flows
     const currency = (sessionFull.currency || "usd").toUpperCase();
-    const amountString = amount ? `${amount} ${currency}` : `${currency}`;
+    const amountString = amount != null ? `${amount} ${currency}` : `${currency}`;
 
-    // Transaction IDs (robust fallback chain)
+    // Transaction ID fallback chain: PaymentIntent → Charge → Session (Order)
     const piObj = typeof sessionFull.payment_intent === "string"
       ? null
       : sessionFull.payment_intent;
@@ -94,9 +98,11 @@ export async function handler(event) {
       chargeId = piObj.charges.data[0].id;
     }
 
-    const txId = paymentIntentId || chargeId || sessionFull.id; // PI → Charge → Session
+    const hasCharge = !!(paymentIntentId || chargeId);
+    const idLabel = hasCharge ? "Transaction ID" : "Order ID";
+    const idValue = hasCharge ? (paymentIntentId || chargeId) : sessionFull.id; // cs_... when free/zero-total
 
-    // Customer email
+    // Customer email (Stripe provides it reliably here)
     const customerEmail =
       sessionFull.customer_details?.email ||
       sessionFull.customer_email ||
@@ -106,22 +112,22 @@ export async function handler(event) {
     const FROM = process.env.FROM_EMAIL || "contact@citeks.net";
     const TO = process.env.TO_EMAIL;
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
     if (!RESEND_API_KEY || !FROM || !TO) {
       console.error("Missing RESEND_API_KEY, FROM_EMAIL, or TO_EMAIL");
       return { statusCode: 500, body: "Email env missing" };
     }
 
-    // Build rush text
     const rushText = rushSelected ? "rush selected" : "standard timeline";
 
-    // --- Customer email (Variant 1) ---
+    // -------- Customer email (Variant 1) --------
     if (customerEmail) {
       const subject = `CITEKS: Payment received — your ${tl.label} is locked in`;
       const html = `
         <div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;font-size:14px;line-height:1.6;">
           <p>Hi,</p>
-          <p>Thanks — your payment for <b>${escapeHtml(tl.label)}</b> (${escapeHtml(amountString)}) is confirmed.
-          Your <b>Transaction ID</b> is <b>${escapeHtml(txId)}</b>.</p>
+          <p>Thanks — your payment for <b>${escapeHtml(tl.label)}</b> (${escapeHtml(amountString)}) is confirmed.</p>
+          <p><b>${escapeHtml(idLabel)}:</b> <b>${escapeHtml(idValue)}</b></p>
           <p><b>What happens next</b><br/>
           • We finalize your slot and share a brief kickoff note.<br/>
           • Timeline: <b>${escapeHtml(String(tl.days))} days</b> (${escapeHtml(rushText)}; rush timeline: <b>${escapeHtml(String(tl.rushDays))} days</b>).<br/>
@@ -136,7 +142,7 @@ export async function handler(event) {
       await sendResend(RESEND_API_KEY, { from: FROM, to: [customerEmail], subject, html });
     }
 
-    // --- Admin copy to you ---
+    // -------- Admin email (to you) --------
     const adminSubject = `CITEKS: Payment received — ${tl.label} (${amountString})`;
     const adminHtml = `
       <div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;font-size:14px;line-height:1.6;">
@@ -145,7 +151,7 @@ export async function handler(event) {
         <p><b>Total:</b> ${escapeHtml(amountString)} &nbsp; <b>Currency:</b> ${escapeHtml(currency)}</p>
         <p><b>Payment Intent:</b> ${escapeHtml(paymentIntentId || "—")}<br/>
            <b>Charge:</b> ${escapeHtml(chargeId || "—")}<br/>
-           <b>Transaction ID (shown to client):</b> ${escapeHtml(txId)}</p>
+           <b>${escapeHtml(idLabel)}:</b> ${escapeHtml(idValue)}</p>
         <p><b>Customer email (Stripe):</b> ${escapeHtml(customerEmail || "—")}</p>
         <p><b>Timelines:</b> ${escapeHtml(String(tl.days))} days (rush ${escapeHtml(String(tl.rushDays))} days)</p>
         <p style="color:#475569;">Source: checkout.session.completed</p>
@@ -159,6 +165,8 @@ export async function handler(event) {
     return { statusCode: 500, body: "Webhook handler error" };
   }
 }
+
+// ---------- helpers ----------
 
 async function sendResend(API_KEY, { from, to, subject, html }) {
   const res = await fetch("https://api.resend.com/emails", {
